@@ -6,18 +6,29 @@ namespace App\Lsp\Methods;
 
 use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\Method;
+use App\Lsp\DocumentManager;
+use App\Lsp\FeatureRegistry;
+use App\Lsp\Project;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
-use App\Lsp\Workspace;
 
 class TextDocumentCodeAction implements Method
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(
+        protected DocumentManager $documents,
+        protected FeatureRegistry $features,
+        protected Project $project,
+    ) {}
+
+    /**
      * Handle the textDocument/codeAction request.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): JsonRpcResponse
+    public function handle(JsonRpcRequest $request): JsonRpcResponse
     {
-        $document = $workspace->documents->get(
+        $document = $this->documents->get(
             (string) $request->get('textDocument.uri')
         );
 
@@ -35,7 +46,7 @@ class TextDocumentCodeAction implements Method
         $actions = [];
         $codeActionContext = new CodeActionContext($range, $context);
 
-        foreach ($workspace->features->codeActions() as $provider) {
+        foreach ($this->features->codeActions() as $provider) {
             array_push($actions, ...$provider->get($document, $codeActionContext));
         }
 

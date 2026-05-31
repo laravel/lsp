@@ -4,29 +4,15 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
-class PhpRunner
+class ScriptRunner
 {
-    /**
-     * The resolved PHP command.
-     *
-     * @var string[]|null
-     */
-    protected ?array $command = null;
-
     /**
      * Create a new PHP runner instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected string $path,
+        protected array $command,
     ) {}
-
-    /**
-     * Get the current Laravel project path.
-     */
-    public function projectPath(): string
-    {
-        return $this->workspace->path();
-    }
 
     /**
      * Run PHP code in the user's Laravel application via artisan tinker.
@@ -34,17 +20,17 @@ class PhpRunner
     public function run(string $code): ?string
     {
         $command = [
-            ...$this->command(),
+            ...$this->command,
             'artisan',
             'tinker',
             '--execute',
-            $this->templateCode($code),
+            $this->code($code),
         ];
 
         $process = proc_open($command, [
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
-        ], $pipes, $this->projectPath());
+        ], $pipes, $this->path);
 
         if (!is_resource($process)) {
             return null;
@@ -73,44 +59,24 @@ class PhpRunner
     }
 
     /**
-     * Get the PHP command used to run Laravel scripts.
-     *
-     * @return string[]
+     * Get PHP code with LSP template helpers available.
      */
-    public function command(): array
+    protected function code(string $code): string
     {
-        if ($this->command !== null) {
-            return $this->command;
-        }
-
-        $command = $this->workspace->config->phpCommand();
-
-        if ($command !== []) {
-            return $this->command = $command;
-        }
-
-        return $this->command = (new PhpEnvironmentDetector($this->workspace))->command();
+        return implode(PHP_EOL, [
+            $this->normalize(file_get_contents(__DIR__ . '/Data/Templates/global.php') ?: ''),
+            $this->normalize($code),
+        ]);
     }
 
     /**
      * Normalize PHP code before passing it to tinker.
      */
-    protected function normalizeCode(string $code): string
+    protected function normalize(string $code): string
     {
         return str_starts_with($code, '<?php')
             ? ltrim(substr($code, 5))
             : $code;
-    }
-
-    /**
-     * Get PHP code with LSP template helpers available.
-     */
-    protected function templateCode(string $code): string
-    {
-        return implode(PHP_EOL, [
-            $this->normalizeCode(file_get_contents(__DIR__ . '/Data/Templates/global.php') ?: ''),
-            $this->normalizeCode($code),
-        ]);
     }
 
     /**

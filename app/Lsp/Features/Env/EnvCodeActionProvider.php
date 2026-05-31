@@ -7,7 +7,7 @@ namespace App\Lsp\Features\Env;
 use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\CodeActionProvider;
 use App\Lsp\Document;
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 use App\Lsp\Workspace;
 
 class EnvCodeActionProvider implements CodeActionProvider
@@ -107,7 +107,7 @@ class EnvCodeActionProvider implements CodeActionProvider
      */
     protected function isEnvDocument(Document $document): bool
     {
-        return str_contains(Uri::of($document->uri)->path(), '.env');
+        return str_contains(FileUri::of($document->uri)->path(), '.env');
     }
 
     /**
@@ -260,7 +260,7 @@ class EnvCodeActionProvider implements CodeActionProvider
     ): array {
         [$line, $prefix] = $this->insertionPoint($missing);
 
-        $uri = (string) Uri::fromPath($this->workspace->path('.env'));
+        $uri = (string) FileUri::fromPath($this->workspace->path('.env'));
         $value = "{$missing}={$value}\n";
 
         return [

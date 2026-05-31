@@ -79,149 +79,203 @@ use App\Lsp\Features\Views\ViewHoverProvider;
 use App\Lsp\Features\Views\ViewLinkProvider;
 use App\Lsp\Watchers\DataProviderWatcher;
 use App\Lsp\Watchers\PestHelperWatcher;
+use Illuminate\Container\Container;
 
 class FeatureRegistry
 {
     /**
-     * Create a new feature registry instance.
+     * Link providers.
+     *
+     * @var array<int, class-string<LinkProvider>>
      */
-    public function __construct(protected Workspace $workspace)
+    public array $links = [
+        AppBindingLinkProvider::class,
+        AssetLinkProvider::class,
+        AuthLinkProvider::class,
+        BladeComponentLinkProvider::class,
+        ConfigLinkProvider::class,
+        ControllerActionLinkProvider::class,
+        EnvLinkProvider::class,
+        InertiaLinkProvider::class,
+        LivewireComponentLinkProvider::class,
+        MiddlewareLinkProvider::class,
+        MixLinkProvider::class,
+        PathLinkProvider::class,
+        RouteLinkProvider::class,
+        StorageLinkProvider::class,
+        TranslationLinkProvider::class,
+        ViewLinkProvider::class,
+    ];
+
+    /**
+     * Hover providers.
+     *
+     * @var array<int, class-string<HoverProvider>>
+     */
+    public array $hovers = [
+        AppBindingHoverProvider::class,
+        AuthHoverProvider::class,
+        BladeComponentHoverProvider::class,
+        ConfigHoverProvider::class,
+        EnvHoverProvider::class,
+        InertiaHoverProvider::class,
+        LivewireComponentHoverProvider::class,
+        MiddlewareHoverProvider::class,
+        MixHoverProvider::class,
+        RouteHoverProvider::class,
+        TranslationHoverProvider::class,
+        ViewHoverProvider::class,
+    ];
+
+    /**
+     * Completion providers.
+     *
+     * @var array<int, class-string<CompletionProvider>>
+     */
+    public array $completions = [
+        BladeComponentCompletionProvider::class,
+        BladeDirectiveCompletionProvider::class,
+        LivewireComponentCompletionProvider::class,
+        EloquentCompletionProvider::class,
+        RouteParameterCompletionProvider::class,
+        RouteCompletionProvider::class,
+        ValidationCompletionProvider::class,
+        ControllerActionCompletionProvider::class,
+        InertiaPropertyCompletionProvider::class,
+        InertiaCompletionProvider::class,
+        ViewContentCompletionProvider::class,
+        ViewCompletionProvider::class,
+        TranslationParameterCompletionProvider::class,
+        TranslationLocaleCompletionProvider::class,
+        TranslationCompletionProvider::class,
+        AppBindingCompletionProvider::class,
+        AssetCompletionProvider::class,
+        AuthCompletionProvider::class,
+        ConfigCompletionProvider::class,
+        EnvCompletionProvider::class,
+        MiddlewareCompletionProvider::class,
+        MixCompletionProvider::class,
+        StorageCompletionProvider::class,
+    ];
+
+    /**
+     * Route diagnostics.
+     *
+     * @var array<int, class-string<DiagnosticProvider>>
+     */
+    public $diagnostics = [
+        AppBindingDiagnosticProvider::class,
+        AssetDiagnosticProvider::class,
+        AuthDiagnosticProvider::class,
+        ConfigDiagnosticProvider::class,
+        ControllerActionDiagnosticProvider::class,
+        EnvDiagnosticProvider::class,
+        InertiaDiagnosticProvider::class,
+        MiddlewareDiagnosticProvider::class,
+        MixDiagnosticProvider::class,
+        RouteDiagnosticProvider::class,
+        StorageDiagnosticProvider::class,
+        TranslationDiagnosticProvider::class,
+        ViewDiagnosticProvider::class,
+    ];
+
+    /**
+     * Code action providers.
+     *
+     * @var array<int, class-string<CodeActionProvider>>
+     */
+    public array $codeActions = [
+        EnvCodeActionProvider::class,
+        InertiaCodeActionProvider::class,
+        ViewCodeActionProvider::class,
+    ];
+
+    /**
+     * File watchers.
+     *
+     * @var array<int, class-string<FileWatcher>>
+     */
+    public array $watchers = [
+        DataProviderWatcher::class,
+        PestHelperWatcher::class,
+    ];
+
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Container $container)
     {
         //
     }
 
     /**
-     * Get file watchers.
-     *
-     * @return array<int, FileWatcher>
-     */
-    public function watchers(): array
-    {
-        return [
-            new DataProviderWatcher($this->workspace),
-            new PestHelperWatcher($this->workspace),
-        ];
-    }
-
-    /**
-     * Get completion providers.
-     *
-     * @return array<int, CompletionProvider>
-     */
-    public function completions(): array
-    {
-        return [
-            new BladeComponentCompletionProvider($this->workspace),
-            new BladeDirectiveCompletionProvider($this->workspace),
-            new LivewireComponentCompletionProvider($this->workspace),
-            new EloquentCompletionProvider($this->workspace),
-            new RouteParameterCompletionProvider($this->workspace),
-            new RouteCompletionProvider($this->workspace),
-            new ValidationCompletionProvider,
-            new ControllerActionCompletionProvider($this->workspace),
-            new InertiaPropertyCompletionProvider($this->workspace),
-            new InertiaCompletionProvider($this->workspace),
-            new ViewContentCompletionProvider($this->workspace),
-            new ViewCompletionProvider($this->workspace),
-            new TranslationParameterCompletionProvider($this->workspace),
-            new TranslationLocaleCompletionProvider($this->workspace),
-            new TranslationCompletionProvider($this->workspace),
-            new AppBindingCompletionProvider($this->workspace),
-            new AssetCompletionProvider($this->workspace),
-            new AuthCompletionProvider($this->workspace),
-            new ConfigCompletionProvider($this->workspace),
-            new EnvCompletionProvider($this->workspace),
-            new MiddlewareCompletionProvider($this->workspace),
-            new MixCompletionProvider($this->workspace),
-            new StorageCompletionProvider($this->workspace),
-        ];
-    }
-
-    /**
-     * Get link providers.
+     * Resolve link providers.
      *
      * @return array<int, LinkProvider>
      */
     public function links(): array
     {
-        return [
-            new AppBindingLinkProvider($this->workspace),
-            new AssetLinkProvider($this->workspace),
-            new AuthLinkProvider($this->workspace),
-            new BladeComponentLinkProvider($this->workspace),
-            new ConfigLinkProvider($this->workspace),
-            new ControllerActionLinkProvider($this->workspace),
-            new EnvLinkProvider($this->workspace),
-            new InertiaLinkProvider($this->workspace),
-            new LivewireComponentLinkProvider($this->workspace),
-            new MiddlewareLinkProvider($this->workspace),
-            new MixLinkProvider($this->workspace),
-            new PathLinkProvider($this->workspace),
-            new RouteLinkProvider($this->workspace),
-            new StorageLinkProvider($this->workspace),
-            new TranslationLinkProvider($this->workspace),
-            new ViewLinkProvider($this->workspace),
-        ];
+        return $this->resolve($this->links);
     }
 
     /**
-     * Get hover providers.
+     * Resolve hover providers.
      *
      * @return array<int, HoverProvider>
      */
     public function hovers(): array
     {
-        return [
-            new AppBindingHoverProvider($this->workspace),
-            new AuthHoverProvider($this->workspace),
-            new BladeComponentHoverProvider($this->workspace),
-            new ConfigHoverProvider($this->workspace),
-            new EnvHoverProvider($this->workspace),
-            new InertiaHoverProvider($this->workspace),
-            new LivewireComponentHoverProvider($this->workspace),
-            new MiddlewareHoverProvider($this->workspace),
-            new MixHoverProvider($this->workspace),
-            new RouteHoverProvider($this->workspace),
-            new TranslationHoverProvider($this->workspace),
-            new ViewHoverProvider($this->workspace),
-        ];
+        return $this->resolve($this->hovers);
     }
 
     /**
-     * Get diagnostic providers.
+     * Resolve completion providers.
+     *
+     * @return array<int, CompletionProvider>
+     */
+    public function completions(): array
+    {
+        return $this->resolve($this->completions);
+    }
+
+    /**
+     * Resolve diagnostic providers.
      *
      * @return array<int, DiagnosticProvider>
      */
     public function diagnostics(): array
     {
-        return [
-            new AppBindingDiagnosticProvider($this->workspace),
-            new AssetDiagnosticProvider($this->workspace),
-            new AuthDiagnosticProvider($this->workspace),
-            new ConfigDiagnosticProvider($this->workspace),
-            new ControllerActionDiagnosticProvider($this->workspace),
-            new EnvDiagnosticProvider($this->workspace),
-            new InertiaDiagnosticProvider($this->workspace),
-            new MiddlewareDiagnosticProvider($this->workspace),
-            new MixDiagnosticProvider($this->workspace),
-            new RouteDiagnosticProvider($this->workspace),
-            new StorageDiagnosticProvider($this->workspace),
-            new TranslationDiagnosticProvider($this->workspace),
-            new ViewDiagnosticProvider($this->workspace),
-        ];
+        return $this->resolve($this->diagnostics);
     }
 
     /**
-     * Get code action providers.
+     * Resolve file watcher providers.
+     *
+     * @return array<int, FileWatcher>
+     */
+    public function watchers(): array
+    {
+        return $this->resolve($this->watchers);
+    }
+
+    /**
+     * Resolve code action providers.
      *
      * @return array<int, CodeActionProvider>
      */
     public function codeActions(): array
     {
-        return [
-            new EnvCodeActionProvider($this->workspace),
-            new InertiaCodeActionProvider($this->workspace),
-            new ViewCodeActionProvider($this->workspace),
-        ];
+        return $this->resolve($this->codeActions);
+    }
+
+    /**
+     * Resolve given classes from the container.
+     *
+     * @param array<int, class-string> $classes
+     * @return array<int, mixed>
+     */
+    protected function resolve(array $classes): array
+    {
+        return array_map(fn (string $class) => $this->container->make($class), $classes);
     }
 }

@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
+use App\Lsp\Contracts\ExceptionHandler;
 use Throwable;
 
-class PhpEnvironmentDetector
+class PhpCommandDetector
 {
     /**
      * Create a new PHP environment detector instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected string $path,
+        protected string $environment,
+        protected ExceptionHandler $exceptions,
     ) {}
 
     /**
@@ -20,9 +23,9 @@ class PhpEnvironmentDetector
      *
      * @return string[]
      */
-    public function command(): array
+    public function detect(): array
     {
-        return match ($this->workspace->config->phpEnvironment()) {
+        return match ($this->environment) {
             'herd'  => $this->herd(),
             'valet' => $this->valet(),
             'sail'  => $this->sail(),
@@ -147,7 +150,7 @@ class PhpEnvironmentDetector
             $process = @proc_open($command, [
                 1 => ['pipe', 'w'],
                 2 => ['pipe', 'w'],
-            ], $pipes, $this->workspace->path());
+            ], $pipes, $this->path);
 
             if (!is_resource($process)) {
                 return null;
@@ -160,7 +163,7 @@ class PhpEnvironmentDetector
 
             return proc_close($process) === 0 && $output !== false ? $output : null;
         } catch (Throwable $e) {
-            report($e);
+            $this->exceptions->report($e);
 
             return null;
         }

@@ -5,15 +5,23 @@ declare(strict_types=1);
 namespace App\Lsp\Listeners;
 
 use App\Lsp\Contracts\Listener;
+use App\Lsp\DocumentManager;
 use App\Lsp\Transport\JsonRpcRequest;
-use App\Lsp\Workspace;
 
 class UpdateDocument implements Listener
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected DocumentManager $documents)
+    {
+        //
+    }
+
+    /**
      * Handle the textDocument/didChange notification.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): void
+    public function handle(JsonRpcRequest $request): void
     {
         $content = $request->collect('contentChanges');
 
@@ -21,7 +29,7 @@ class UpdateDocument implements Listener
             return;
         }
 
-        $workspace->documents->update(
+        $this->documents->update(
             $request->get('textDocument.uri'),
             $content->last()['text'],
         );

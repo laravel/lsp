@@ -6,19 +6,30 @@ namespace App\Lsp\Methods;
 
 use App\Lsp\Contracts\Method;
 use App\Lsp\Document;
+use App\Lsp\DocumentManager;
+use App\Lsp\FeatureRegistry;
+use App\Lsp\Project;
 use App\Lsp\Support\Position;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
-use App\Lsp\Workspace;
 
 class TextDocumentDefinition implements Method
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(
+        protected DocumentManager $documents,
+        protected FeatureRegistry $features,
+        protected Project $project,
+    ) {}
+
+    /**
      * Handle the textDocument/definition request.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): JsonRpcResponse
+    public function handle(JsonRpcRequest $request): JsonRpcResponse
     {
-        $document = $workspace->documents->get(
+        $document = $this->documents->get(
             (string) $request->get('textDocument.uri')
         );
 
@@ -32,9 +43,13 @@ class TextDocumentDefinition implements Method
             return JsonRpcResponse::result($request->id(), []);
         }
 
+        if (!is_int($position['line'] ?? null) || !is_int($position['character'] ?? null)) {
+            return JsonRpcResponse::result($request->id(), []);
+        }
+
         $locationLinks = [];
 
-        foreach ($this->links($workspace, $document) as $link) {
+        foreach ($this->links($document) as $link) {
             $range = $link['range'] ?? null;
 
             if (!is_array($range) || !Position::inRange($range, $position)) {
@@ -56,11 +71,11 @@ class TextDocumentDefinition implements Method
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function links(Workspace $workspace, Document $document): array
+    protected function links(Document $document): array
     {
         $links = [];
 
-        foreach ($workspace->features->links() as $provider) {
+        foreach ($this->features->links() as $provider) {
             array_push($links, ...$provider->get($document));
         }
 

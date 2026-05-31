@@ -5,25 +5,34 @@ declare(strict_types=1);
 namespace App\Lsp\Listeners;
 
 use App\Lsp\Contracts\Listener;
+use App\Lsp\FeatureRegistry;
+use App\Lsp\Project;
 use App\Lsp\Support\Pattern;
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 use App\Lsp\Transport\JsonRpcRequest;
-use App\Lsp\Workspace;
 
 class NotifyFileWatchers implements Listener
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(
+        protected FeatureRegistry $features,
+        protected Project $project,
+    ) {}
+
+    /**
      * Handle the workspace/didChangeWatchedFiles notification.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): void
+    public function handle(JsonRpcRequest $request): void
     {
-        $paths = $this->paths($request, $workspace);
+        $paths = $this->paths($request);
 
         if ($paths === []) {
             return;
         }
 
-        foreach ($workspace->features->watchers() as $watcher) {
+        foreach ($this->features->watchers() as $watcher) {
             if (Pattern::matchesAnyPath($paths, $watcher->patterns())) {
                 $watcher->onFileChange($paths);
             }
@@ -35,35 +44,28 @@ class NotifyFileWatchers implements Listener
      *
      * @return array<int, string>
      */
-    protected function paths(JsonRpcRequest $request, Workspace $workspace): array
+    protected function paths(JsonRpcRequest $request): array
     {
         return $request->collect('changes')
             ->pluck('uri')
             ->filter(fn (mixed $uri): bool => is_string($uri))
-            ->map(fn (string $uri): ?string => $this->relativePathFromUri($uri, $workspace))
-            ->filter(fn (mixed $path): bool => is_string($path))
+            ->map(fn (string $uri): string => $this->relativePath(FileUri::of($uri)->path()))
             ->unique()
             ->values()
             ->all();
     }
 
     /**
-     * Get a workspace-relative path from a file URI.
+     * Get a path relative to the current URI.
      */
-    protected function relativePathFromUri(string $uri, Workspace $workspace): ?string
+    public function relativePath(string $path): string
     {
-        if (parse_url($uri, PHP_URL_SCHEME) !== 'file') {
-            return null;
+        $basePath = $this->project->path();
+
+        if (!str_contains($path, $basePath)) {
+            return $path;
         }
 
-        $path = Uri::of($uri)->path();
-
-        if ($path === '') {
-            return null;
-        }
-
-        $relativePath = Uri::of($workspace->baseUri)->relativePath($path);
-
-        return $relativePath === $path ? null : $relativePath;
+        return ltrim(str_replace($basePath, '', realpath($path) ?: $path), DIRECTORY_SEPARATOR);
     }
 }

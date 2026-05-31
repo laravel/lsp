@@ -6,17 +6,28 @@ namespace App\Lsp\Listeners;
 
 use App\Lsp\Contracts\Listener;
 use App\Lsp\Document;
+use App\Lsp\DocumentManager;
+use App\Lsp\FeatureRegistry;
+use App\Lsp\Server;
 use App\Lsp\Transport\JsonRpcRequest;
-use App\Lsp\Workspace;
 
 class PublishDiagnostics implements Listener
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(
+        protected Server $server,
+        protected DocumentManager $documents,
+        protected FeatureRegistry $features,
+    ) {}
+
+    /**
      * Handle the incoming LSP notification.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): void
+    public function handle(JsonRpcRequest $request): void
     {
-        $document = $workspace->documents->get(
+        $document = $this->documents->get(
             $request->get('textDocument.uri')
         );
 
@@ -24,22 +35,22 @@ class PublishDiagnostics implements Listener
             return;
         }
 
-        $this->publish($document, $workspace);
+        $this->publish($document);
     }
 
     /**
      * Publish diagnostics for the given document.
      */
-    public function publish(Document $document, Workspace $workspace): void
+    public function publish(Document $document): void
     {
         $diagnostics = [];
 
-        foreach ($workspace->features->diagnostics() as $provider) {
+        foreach ($this->features->diagnostics() as $provider) {
             array_push($diagnostics, ...$provider->get($document));
         }
 
-        $workspace->server->sendNotification('textDocument/publishDiagnostics', [
-            'uri'         => $document->uri,
+        $this->server->notify('textDocument/publishDiagnostics', [
+            'uri' => $document->uri,
             'diagnostics' => $diagnostics,
         ]);
     }

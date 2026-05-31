@@ -13,5 +13,5 @@ interface Method
     /**
      * Handle the incoming LSP request.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): JsonRpcResponse;
+    public function handle(JsonRpcRequest $request): JsonRpcResponse;
 }

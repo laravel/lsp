@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 
 class Workspace
 {
@@ -47,15 +47,15 @@ class Workspace
      */
     public function path(string $path = ''): string
     {
-        return Uri::of($this->baseUri)->path($path);
+        return FileUri::of($this->baseUri)->path($path);
     }
 
     /**
      * Get the file URI to the workspace root.
      */
-    public function uri(): Uri
+    public function uri(): FileUri
     {
-        return Uri::of($this->baseUri);
+        return FileUri::of($this->baseUri);
     }
 
     /**
@@ -63,13 +63,7 @@ class Workspace
      */
     public function target(string $relativePath, ?int $line = null): string
     {
-        $target = (string) $this->uri()->joinPath($relativePath);
-
-        if ($line !== null) {
-            $target .= '#L' . max(1, $line);
-        }
-
-        return $target;
+        return (string) $this->uri()->target($relativePath, $line);
     }
 
     /**

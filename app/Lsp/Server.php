@@ -1,19 +1,24 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Lsp;
 
+use App\Lsp\Contracts\ExceptionHandler;
 use App\Lsp\Contracts\Listener;
 use App\Lsp\Contracts\Method;
 use App\Lsp\Contracts\Transport;
+use App\Lsp\Exceptions\Handler;
+use App\Lsp\Exceptions\MethodNotFoundException;
+use App\Lsp\Exceptions\ParseException;
+use App\Lsp\Exceptions\ServerNotInitializedException;
 use App\Lsp\Listeners\ClearDocumentDiagnostics;
 use App\Lsp\Listeners\CloseDocument;
 use App\Lsp\Listeners\NotifyFileWatchers;
 use App\Lsp\Listeners\OpenDocument;
 use App\Lsp\Listeners\PublishDiagnostics;
 use App\Lsp\Listeners\PublishOpenDocumentDiagnostics;
+use App\Lsp\Listeners\RegisterFileWatchers;
 use App\Lsp\Listeners\UpdateDocument;
+use App\Lsp\Methods\Initialize;
 use App\Lsp\Methods\LaravelData;
 use App\Lsp\Methods\TextDocumentCodeAction;
 use App\Lsp\Methods\TextDocumentCompletion;
@@ -22,22 +27,29 @@ use App\Lsp\Methods\TextDocumentDocumentLink;
 use App\Lsp\Methods\TextDocumentHover;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
+use App\Lsp\Transport\StdioTransport;
+use Illuminate\Container\Container;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Throwable;
 
-class Server
+final class Server
 {
     /**
      * The registered request handlers.
      *
      * @var array<string, class-string<Method>>
      */
-    protected array $requests = [
-        'laravel/data'              => LaravelData::class,
-        'textDocument/codeAction'   => TextDocumentCodeAction::class,
-        'textDocument/completion'   => TextDocumentCompletion::class,
-        'textDocument/definition'   => TextDocumentDefinition::class,
+    protected array $handlers = [
+        'initialize' => Initialize::class,
+        'laravel/data' => LaravelData::class,
+        'textDocument/codeAction' => TextDocumentCodeAction::class,
+        'textDocument/completion' => TextDocumentCompletion::class,
+        'textDocument/definition' => TextDocumentDefinition::class,
         'textDocument/documentLink' => TextDocumentDocumentLink::class,
-        'textDocument/hover'        => TextDocumentHover::class,
+        'textDocument/hover' => TextDocumentHover::class,
     ];
 
     /**
@@ -45,37 +57,43 @@ class Server
      *
      * @var array<string, array<int, class-string<Listener>>>
      */
-    protected array $notifications = [
-        'textDocument/didOpen'            => [OpenDocument::class, PublishDiagnostics::class],
-        'textDocument/didChange'          => [UpdateDocument::class, PublishDiagnostics::class],
-        'textDocument/didClose'           => [CloseDocument::class, ClearDocumentDiagnostics::class],
+    protected array $listeners = [
+        'initialized' => [RegisterFileWatchers::class],
+        'textDocument/didOpen' => [OpenDocument::class, PublishDiagnostics::class],
+        'textDocument/didChange' => [UpdateDocument::class, PublishDiagnostics::class],
+        'textDocument/didClose' => [CloseDocument::class, ClearDocumentDiagnostics::class],
         'workspace/didChangeWatchedFiles' => [NotifyFileWatchers::class, PublishOpenDocumentDiagnostics::class],
     ];
 
     /**
-     * The active workspace instance.
+     * Store the last sent request id.
      */
-    protected ?Workspace $workspace = null;
+    protected int $lastRequestId = 0;
 
     /**
-     * The next request ID for server-originated requests.
-     */
-    protected int $nextRequestId = 1;
-
-    /**
-     * Indicates if the server has received a shutdown request.
-     */
-    protected bool $shutdown = false;
-
-    /**
-     * Create a new server instance.
+     * Instantiate a new class instance.
      */
     public function __construct(
         protected Transport $transport,
-    ) {}
+        protected LoggerInterface $logger = new NullLogger,
+        protected Container $container = new Container,
+    ) {
+        $this->registerBaseBindings();
+    }
 
     /**
-     * Start the server and begin listening for messages.
+     * Create a new Stdio Server instance.
+     */
+    public static function stdio(): static
+    {
+        return new static(
+            new StdioTransport,
+            new Logger('Laravel LSP', [new StreamHandler('php://stderr')]),
+        );
+    }
+
+    /**
+     * Start the server.
      */
     public function start(): void
     {
@@ -84,270 +102,163 @@ class Server
     }
 
     /**
-     * Handle an incoming raw JSON-RPC message.
+     * Handle the incoming request.
      */
-    public function handle(string $rawMessage): void
+    protected function handle(string $message): void
     {
         try {
-            $jsonRequest = json_decode($rawMessage, true);
-
-            if (!is_array($jsonRequest) || json_last_error() !== JSON_ERROR_NONE) {
-                $this->send(JsonRpcResponse::error(null, -32700, 'Parse error: Invalid JSON.'));
-
-                return;
-            }
-
-            if ($this->isResponse($jsonRequest)) {
-                return;
-            }
-
-            $request = JsonRpcRequest::from($jsonRequest);
-
-            $method = $request->method();
-
-            if ($method === 'exit') {
-                exit($this->shutdown ? 0 : 1);
-            }
-
-            if ($method === 'initialize') {
-                $this->handleInitialize($request);
-
-                return;
-            }
-
-            if ($method === 'initialized') {
-                $this->handleInitialized();
-
-                return;
-            }
-
-            if ($method === 'shutdown') {
-                $this->handleShutdown($request);
-
-                return;
-            }
-
-            if (isset($this->requests[$method])) {
-                $this->handleRequest($request);
-
-                return;
-            }
-
-            if (isset($this->notifications[$method])) {
-                $this->handleNotification($request);
-
-                return;
-            }
-
-            $this->handleUnknownRequest($request);
+            $request = $this->decode($message);
         } catch (Throwable $e) {
-            report($e);
+            $this->container[ExceptionHandler::class]->report($e);
 
-            $this->send(JsonRpcResponse::error(
-                isset($jsonRequest) && is_array($jsonRequest) ? ($jsonRequest['id'] ?? null) : null,
-                -32603,
-                $e->getMessage(),
-            ));
-        }
-    }
-
-    /**
-     * Determine if the given JSON-RPC payload is a response to a server-originated request.
-     *
-     * @param  array<string, mixed>  $jsonRequest
-     */
-    protected function isResponse(array $jsonRequest): bool
-    {
-        return isset($jsonRequest['id']) && !isset($jsonRequest['method']);
-    }
-
-    /**
-     * Handle the initialize request and return server capabilities.
-     */
-    protected function handleInitialize(JsonRpcRequest $request): void
-    {
-        $this->workspace = new Workspace(
-            $request->get('rootUri'),
-            $this,
-            new WorkspaceConfiguration($request->collect('initializationOptions')->all()),
-        );
-
-        $composer = json_decode(file_get_contents(__DIR__.'/../../composer.json'), true);
-
-        $this->send(JsonRpcResponse::result($request->id(), [
-            'capabilities' => [
-                'textDocumentSync' => [
-                    'openClose' => true,
-                    'change'    => 1, // Full sync
-                ],
-                'documentLinkProvider' => [
-                    'resolveProvider' => false,
-                ],
-                'completionProvider' => [
-                    'triggerCharacters' => ['"', "'", '|', 'x', '-', ':', '@'],
-                ],
-                'codeActionProvider' => [
-                    'codeActionKinds' => ['quickfix'],
-                ],
-                'definitionProvider' => $request->boolean('initializationOptions.definitionProvider', false),
-                'hoverProvider'      => true,
-            ],
-            'serverInfo' => $info = [
-                'name'    => 'Laravel LSP',
-                'version' => $composer['version'],
-            ],
-            'laravel' => $laravel = [
-                'phpEnvironment' => $this->workspace->config->phpEnvironment(),
-                'phpCommand' => $this->workspace->php->command() ?? ['php'],
-            ],
-        ]));
-
-        info('LSP Server Started.', array_merge($info, $laravel));
-    }
-
-    /**
-     * Handle the initialized notification.
-     */
-    protected function handleInitialized(): void
-    {
-        $watchers = $this->workspace?->fileWatchers() ?? [];
-
-        if ($watchers === []) {
-            return;
-        }
-
-        $this->send([
-            'id'     => $this->nextRequestId(),
-            'method' => 'client/registerCapability',
-            'params' => [
-                'registrations' => [
-                    [
-                        'id'              => 'file-watching',
-                        'method'          => 'workspace/didChangeWatchedFiles',
-                        'registerOptions' => [
-                            'watchers' => $watchers,
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        foreach ($this->workspace?->features->watchers() ?? [] as $watcher) {
-            $watcher->initialize();
-        }
-    }
-
-    /**
-     * Handle the shutdown request.
-     */
-    protected function handleShutdown(JsonRpcRequest $request): void
-    {
-        $this->shutdown = true;
-
-        $this->send(JsonRpcResponse::result($request->id(), []));
-    }
-
-    /**
-     * Handle a request method that requires a workspace.
-     */
-    protected function handleRequest(JsonRpcRequest $request): void
-    {
-        if ($this->workspace === null) {
-            $this->respondWorkspaceRequired($request);
+            $this->respond(JsonRpcResponse::error(null, -32700, $e->getMessage()));
 
             return;
         }
 
-        $handler = new $this->requests[$request->method()];
+        $response = $this->dispatch($request);
 
-        $response = $handler->handle($request, $this->workspace);
-
-        if (!$request->isNotification()) {
-            $this->send($response);
+        if (! is_null($response)) {
+            $this->respond($response);
         }
     }
 
     /**
-     * Handle a notification listener that requires a workspace.
+     * Respond to the current request.
      */
-    protected function handleNotification(JsonRpcRequest $request): void
+    protected function respond(JsonRpcResponse $response): void
     {
-        $workspace = $this->workspace;
-
-        if ($workspace === null) {
-            return;
-        }
-
-        foreach ($this->notifications[$request->method()] as $listener) {
-            (new $listener)->handle($request, $workspace);
-        }
+        $this->transport->send($response->toJson());
     }
 
     /**
-     * Handle an unknown request.
+     * Send a request to the client.
      */
-    protected function handleUnknownRequest(JsonRpcRequest $request): void
+    public function send(string $method, ?array $params = null)
+    {
+        $data = [
+            'jsonrpc' => '2.0',
+            'id' => $this->lastRequestId++,
+            'method' => $method,
+        ];
+
+        if (! is_null($params)) {
+            $data['params'] = $params;
+        }
+
+        $this->transport->send(json_encode($data));
+    }
+
+    /**
+     * Send a notification to the client.
+     */
+    public function notify(string $method, ?array $params = null)
+    {
+        $data = [
+            'jsonrpc' => '2.0',
+            'method' => $method,
+        ];
+
+        if (! is_null($params)) {
+            $data['params'] = $params;
+        }
+
+        $this->transport->send(json_encode($data));
+    }
+
+    /**
+     * Decode the request.
+     */
+    protected function decode(string $message): JsonRpcRequest
+    {
+        $payload = json_decode($message, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new ParseException;
+        }
+
+        return JsonRpcRequest::from($payload);
+    }
+
+    /**
+     * Dispatch the request.
+     */
+    public function dispatch(JsonRpcRequest $request): ?JsonRpcResponse
     {
         if ($request->isNotification()) {
-            return;
+            $this->dispatchNotification($request);
+
+            return null;
         }
 
-        $this->send(
-            JsonRpcResponse::error(
-                $request->id(),
-                -32601,
-                "The method [{$request->method()}] was not found.",
-            )
+        return $this->dispatchRequest($request);
+    }
+
+    /**
+     * Handle the notification.
+     */
+    public function dispatchNotification(JsonRpcRequest $request): void
+    {
+        foreach ($this->listeners($request->method()) as $listener) {
+            try {
+                $this->container->make($listener)->handle($request);
+            } catch (Throwable $e) {
+                $this->container[ExceptionHandler::class]->report($e);
+            }
+        }
+    }
+
+    /**
+     * Handle request.
+     */
+    public function dispatchRequest(JsonRpcRequest $request): JsonRpcResponse
+    {
+        try {
+            return $this->handler($request->method())->handle($request);
+        } catch (Throwable $e) {
+            $this->container[ExceptionHandler::class]->report($e);
+
+            return $this->container[ExceptionHandler::class]->render($request, $e);
+        }
+    }
+
+    /**
+     * Retrieve the request handler.
+     */
+    protected function handler(string $method): Method
+    {
+        $class = $this->handlers[$method]
+            ?? throw new MethodNotFoundException($method);
+
+        return $this->container->make($class);
+    }
+
+    /**
+     * Get listeners of the given notification.
+     *
+     * @return array<int, Listener>
+     */
+    protected function listeners(string $notification): array
+    {
+        return array_map(
+            fn (string $class) => $this->container->make($class),
+            $this->listeners[$notification] ?? [],
         );
     }
 
     /**
-     * Send a workspace-required error response.
+     * Register base container bindings.
      */
-    protected function respondWorkspaceRequired(JsonRpcRequest $request): void
+    protected function registerBaseBindings(): void
     {
-        if ($request->isNotification()) {
-            return;
-        }
+        $this->container->instance(Server::class, $this);
+        $this->container->instance(Transport::class, $this->transport);
+        $this->container->instance(LoggerInterface::class, $this->logger);
 
-        $this->send(JsonRpcResponse::error(
-            $request->id(),
-            -32002,
-            'Server not initialized.',
-        ));
-    }
+        $this->container->singletonIf(DocumentManager::class);
+        $this->container->singletonIf(ExceptionHandler::class, Handler::class);
 
-    /**
-     * Send a JSON-RPC notification to the client.
-     *
-     * @param  array<string, mixed>  $params
-     */
-    public function sendNotification(string $method, array $params = []): void
-    {
-        $this->send(JsonRpcResponse::notification($method, $params));
-    }
-
-    /**
-     * Send a JSON-RPC message to the client.
-     *
-     * @param  JsonRpcResponse|array<string, mixed>  $message
-     */
-    protected function send(JsonRpcResponse|array $message): void
-    {
-        $payload = $message instanceof JsonRpcResponse
-            ? $message->toJson()
-            : json_encode(['jsonrpc' => '2.0', ...$message], JSON_UNESCAPED_UNICODE);
-
-        if ($payload !== false) {
-            $this->transport->send($payload);
-        }
-    }
-
-    /**
-     * Generate the next server-originated request ID.
-     */
-    protected function nextRequestId(): int
-    {
-        return $this->nextRequestId++;
+        $this->container->singletonIf(Project::class, fn () => throw new ServerNotInitializedException);
+        $this->container->singletonIf(FeatureRegistry::class);
     }
 }

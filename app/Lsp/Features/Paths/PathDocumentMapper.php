@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 use App\Lsp\Workspace;
 use Illuminate\Support\Collection;
 
@@ -55,7 +55,7 @@ class PathDocumentMapper extends DocumentMapper
         return is_file($path)
             ? [[
                 'range'  => $argument->range(),
-                'target' => (string) Uri::fromPath($path),
+                'target' => (string) FileUri::fromPath($path),
             ]]
             : [];
     }

@@ -12,5 +12,5 @@ interface Listener
     /**
      * Handle the incoming LSP notification.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): void;
+    public function handle(JsonRpcRequest $request): void;
 }

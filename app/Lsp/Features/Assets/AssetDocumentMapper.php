@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 use App\Lsp\Workspace;
 use Illuminate\Support\Collection;
 
@@ -49,7 +49,7 @@ class AssetDocumentMapper extends DocumentMapper
 
         return [[
             'range'  => $argument->range(),
-            'target' => (string) Uri::fromPath($asset['fullPath']),
+            'target' => (string) FileUri::fromPath($asset['fullPath']),
         ]];
     }
 

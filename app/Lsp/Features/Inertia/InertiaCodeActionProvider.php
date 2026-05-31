@@ -7,7 +7,7 @@ namespace App\Lsp\Features\Inertia;
 use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\CodeActionProvider;
 use App\Lsp\Document;
-use App\Lsp\Support\Uri;
+use App\Lsp\Support\FileUri;
 use App\Lsp\Workspace;
 use Illuminate\Support\Collection;
 
@@ -68,7 +68,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
     protected function createPageAction(string $path, string $missing, string $extension, array $diagnostic): array
     {
         $relativePath = trim($path, '/') . '/' . ltrim($missing, '/') . ".{$extension}";
-        $uri = (string) Uri::fromPath($this->workspace->path($relativePath));
+        $uri = (string) FileUri::fromPath($this->workspace->path($relativePath));
         $contents = $this->contents($extension);
 
         return [

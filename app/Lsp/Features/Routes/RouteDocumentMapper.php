@@ -110,7 +110,7 @@ class RouteDocumentMapper extends DocumentMapper
 
             return [[
                 'range'  => $argument->range(),
-                'target' => (string) $this->workspace->uri()->joinPath($view['path']),
+                'target' => $this->workspace->target($view['path']),
             ]];
         }
 
@@ -122,7 +122,7 @@ class RouteDocumentMapper extends DocumentMapper
 
         return [[
             'range'  => $argument->range(),
-            'target' => $this->workspace->uri()->joinPath($route['filename']) . '#L' . max(1, (int) ($route['line'] ?? 1)),
+            'target' => $this->workspace->target($route['filename'], (int) ($route['line'] ?? 1)),
         ]];
     }
 
@@ -144,7 +144,7 @@ class RouteDocumentMapper extends DocumentMapper
             ? '[Closure]'
             : (string) ($route['action'] ?? '');
         $filename = $route['filename'];
-        $target = (string) $this->workspace->uri()->joinPath($filename);
+        $target = $this->workspace->target($filename);
 
         return [
             'range'    => $argument->range(),

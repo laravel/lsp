@@ -5,17 +5,25 @@ declare(strict_types=1);
 namespace App\Lsp\Methods;
 
 use App\Lsp\Contracts\Method;
+use App\Lsp\Project;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
-use App\Lsp\Workspace;
 use Illuminate\Contracts\Support\Arrayable;
 
 class LaravelData implements Method
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
+    /**
      * Handle the laravel/data request.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): JsonRpcResponse
+    public function handle(JsonRpcRequest $request): JsonRpcResponse
     {
         if (!$name = $request->get('name')) {
             return JsonRpcResponse::error(
@@ -25,23 +33,12 @@ class LaravelData implements Method
             );
         }
 
-        if (!$provider = $workspace->data->get($name)) {
-            return JsonRpcResponse::error(
-                $request->id(),
-                -32602,
-                "Invalid params: The [{$name}] data provider was not found.",
-            );
-        }
-
-        $data = $provider->get();
+        $data = $this->project->index->get($name);
 
         if ($data instanceof Arrayable) {
             $data = $data->toArray();
         }
 
-        return JsonRpcResponse::result(
-            $request->id(),
-            (array) $data,
-        );
+        return JsonRpcResponse::result($request->id(), (array) $data);
     }
 }

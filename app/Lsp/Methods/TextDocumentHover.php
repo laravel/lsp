@@ -5,18 +5,29 @@ declare(strict_types=1);
 namespace App\Lsp\Methods;
 
 use App\Lsp\Contracts\Method;
+use App\Lsp\DocumentManager;
+use App\Lsp\FeatureRegistry;
+use App\Lsp\Project;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
-use App\Lsp\Workspace;
 
 class TextDocumentHover implements Method
 {
     /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(
+        protected DocumentManager $documents,
+        protected FeatureRegistry $features,
+        protected Project $project,
+    ) {}
+
+    /**
      * Handle the textDocument/hover request.
      */
-    public function handle(JsonRpcRequest $request, Workspace $workspace): JsonRpcResponse
+    public function handle(JsonRpcRequest $request): JsonRpcResponse
     {
-        $document = $workspace->documents->get(
+        $document = $this->documents->get(
             (string) $request->get('textDocument.uri')
         );
 
@@ -30,7 +41,7 @@ class TextDocumentHover implements Method
             return JsonRpcResponse::result($request->id(), null);
         }
 
-        foreach ($workspace->features->hovers() as $provider) {
+        foreach ($this->features->hovers() as $provider) {
             $hover = $provider->get($document, $position);
 
             if ($hover !== null) {
