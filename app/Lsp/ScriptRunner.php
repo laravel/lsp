@@ -8,11 +8,23 @@ class ScriptRunner
 {
     /**
      * Create a new PHP runner instance.
+     *
+     * @param  array<int, string>  $command
      */
     public function __construct(
         protected string $path,
         protected array $command,
     ) {}
+
+    /**
+     * Get the PHP command used to run scripts.
+     *
+     * @return array<int, string>
+     */
+    public function command(): array
+    {
+        return $this->command;
+    }
 
     /**
      * Run PHP code in the user's Laravel application via artisan tinker.

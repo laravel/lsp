@@ -6,7 +6,6 @@ namespace App\Lsp\Methods;
 
 use App\Lsp\Contracts\ExceptionHandler;
 use App\Lsp\Contracts\Method;
-use App\Lsp\DocumentManager;
 use App\Lsp\PhpCommandDetector;
 use App\Lsp\Project;
 use App\Lsp\ProjectIndex;
@@ -33,14 +32,42 @@ final class Initialize implements Method
     {
         $this->container->singleton(Project::class);
 
-        $this->container->instance(Project::class, new Project(
+        $project = new Project(
             $uri = FileUri::of($request->get('rootUri')),
             $request->array('initializationOptions'),
             new ProjectIndex($this->container),
             new ScriptRunner($uri->path(), $this->phpCommand($request)),
-        ));
+        );
 
-        return JsonRpcResponse::result($request->id(), []);
+        $this->container->instance(Project::class, $project);
+
+        return JsonRpcResponse::result($request->id(), [
+            'capabilities' => [
+                'textDocumentSync' => [
+                    'openClose' => true,
+                    'change'    => 1,
+                ],
+                'documentLinkProvider' => [
+                    'resolveProvider' => false,
+                ],
+                'completionProvider' => [
+                    'triggerCharacters' => ['"', "'", '|', 'x', '-', ':', '@'],
+                ],
+                'codeActionProvider' => [
+                    'codeActionKinds' => ['quickfix'],
+                ],
+                'definitionProvider' => $project->boolean('definitionProvider', false),
+                'hoverProvider'      => true,
+            ],
+            'serverInfo' => [
+                'name'    => 'Laravel LSP',
+                'version' => $this->version(),
+            ],
+            'laravel' => [
+                'phpEnvironment' => $project->phpEnvironment(),
+                'phpCommand'     => $project->scripts->command(),
+            ],
+        ]);
     }
 
     /**
@@ -59,5 +86,15 @@ final class Initialize implements Method
             (string) $request->string('initializationOptions.phpEnvironment', 'auto'),
             $this->container[ExceptionHandler::class],
         ))->detect();
+    }
+
+    /**
+     * Resolve the server version.
+     */
+    protected function version(): string
+    {
+        $composer = json_decode(file_get_contents(__DIR__ . '/../../../composer.json') ?: '{}', true);
+
+        return is_array($composer) ? (string) ($composer['version'] ?? '') : '';
     }
 }
