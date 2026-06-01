@@ -4,35 +4,20 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
 use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class Controllers extends DataProvider
+class Controllers implements DataProvider
 {
     /**
      * Create a new controllers provider instance.
      */
     public function __construct(protected Project $project)
     {
-        parent::__construct($project->scripts);
-    }
-
-    /**
-     * Get the controllers template to run.
-     */
-    public function template(): string
-    {
-        return '';
-    }
-
-    /**
-     * Parse raw controller data.
-     */
-    public function parse(array $data): Collection
-    {
-        return collect($data);
+        //
     }
 
     /**
@@ -55,18 +40,13 @@ class Controllers extends DataProvider
      */
     public function get(): Collection
     {
-        if ($this->loaded) {
-            return $this->data;
-        }
-
-        $this->loaded = true;
         $path = $this->project->path('app/Http/Controllers');
 
         if (!is_dir($path)) {
-            return $this->data = collect();
+            return collect();
         }
 
-        return $this->data = collect(Finder::create()->files()->name('*.php')->in($path))
+        return collect(Finder::create()->files()->name('*.php')->in($path))
             ->filter(fn (SplFileInfo $file): bool => $file->getSize() <= 50_000)
             ->flatMap(fn (SplFileInfo $file): array => $this->actionsIn((string) file_get_contents($file->getRealPath() ?: $file->getPathname())))
             ->unique()

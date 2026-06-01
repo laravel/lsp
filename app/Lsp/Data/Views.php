@@ -4,10 +4,20 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
-class Views extends DataProvider
+class Views implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the views template to run.
      */
@@ -27,6 +37,16 @@ class Views extends DataProvider
     }
 
     /**
+     * Get data.
+     */
+    public function get(): Collection
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get view-related watcher patterns.
      *
      * @return array<int, string>
@@ -36,13 +56,5 @@ class Views extends DataProvider
         return [
             '**/{resources,Modules/*/resources}/views/**/*.blade.php',
         ];
-    }
-
-    /**
-     * Get the default views data.
-     */
-    protected function default(): Collection
-    {
-        return collect();
     }
 }

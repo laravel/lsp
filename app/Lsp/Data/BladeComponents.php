@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-class BladeComponents extends DataProvider
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
+
+class BladeComponents implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the Blade components template to run.
      */
@@ -26,6 +37,18 @@ class BladeComponents extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array<string, mixed>
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get Blade component-related watcher patterns.
      *
      * @return array<int, string>
@@ -35,19 +58,6 @@ class BladeComponents extends DataProvider
         return [
             '**/{resources,Modules/*/resources}/views/**/*.blade.php',
             'app/View/Components/{,*,**/*}.php',
-        ];
-    }
-
-    /**
-     * Get the default Blade component data.
-     *
-     * @return array<string, mixed>
-     */
-    protected function default(): array
-    {
-        return [
-            'components' => [],
-            'prefixes'   => [],
         ];
     }
 }

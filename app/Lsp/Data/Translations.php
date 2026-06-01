@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-class Translations extends DataProvider
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
+
+class Translations implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the translations template to run.
      */
@@ -57,6 +68,18 @@ class Translations extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array<string, mixed>
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get translation-related watcher patterns.
      *
      * @return array<int, string>
@@ -66,21 +89,6 @@ class Translations extends DataProvider
         return [
             'lang/{*,**/*}',
             'resources/lang/{*,**/*}',
-        ];
-    }
-
-    /**
-     * Get default translation data.
-     *
-     * @return array<string, mixed>
-     */
-    protected function default(): array
-    {
-        return [
-            'default'      => '',
-            'translations' => [],
-            'languages'    => [],
-            'paths'        => [],
         ];
     }
 }

@@ -4,30 +4,29 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use Illuminate\Support\Collection;
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
 
-class Routes extends DataProvider
+class Routes implements DataProvider
 {
     /**
-     * Get the routes template to run.
+     * Instantiate a new class instance.
      */
-    public function template(): string
+    public function __construct(protected Project $project)
     {
-        return file_get_contents(__DIR__ . '/Templates/routes.php');
+        //
     }
 
     /**
-     * Parse the raw routes data.
-     *
-     * @param  array<int, array<string, mixed>>  $data
+     * Get data.
      */
-    public function parse(array $data): Collection
+    public function get(): mixed
     {
-        return collect($data);
+        return collect($this->project->scripts->json(file_get_contents(__DIR__ . '/Templates/routes.php')));
     }
 
     /**
-     * Get route-related watcher patterns.
+     * Patterns that reevaluate the data.
      *
      * @return array<int, string>
      */
@@ -36,13 +35,5 @@ class Routes extends DataProvider
         return [
             '**/{[Rr]oute}{,s}{.php,/*.php,/**/*.php}',
         ];
-    }
-
-    /**
-     * Get the default route data.
-     */
-    protected function default(): Collection
-    {
-        return collect();
     }
 }

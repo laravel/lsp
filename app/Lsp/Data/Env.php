@@ -4,33 +4,18 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
 use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
-class Env extends DataProvider
+class Env implements DataProvider
 {
     /**
      * Create a new env provider instance.
      */
     public function __construct(protected Project $project)
     {
-        parent::__construct($project->scripts);
-    }
-
-    /**
-     * Get the env template to run.
-     */
-    public function template(): string
-    {
-        return '';
-    }
-
-    /**
-     * Parse raw env data.
-     */
-    public function parse(array $data): Collection
-    {
-        return collect($data);
+        //
     }
 
     /**
@@ -50,18 +35,13 @@ class Env extends DataProvider
      */
     public function get(): Collection
     {
-        if ($this->loaded) {
-            return $this->data;
-        }
-
-        $this->loaded = true;
         $path = $this->project->path('.env');
 
         if (!is_file($path)) {
-            return $this->data = collect();
+            return collect();
         }
 
-        return $this->data = collect(explode("\n", (string) file_get_contents($path)))
+        return collect(explode("\n", (string) file_get_contents($path)))
             ->map(fn (string $line, int $index): array => [
                 'line'       => trim($line),
                 'lineNumber' => $index + 1,

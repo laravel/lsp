@@ -4,10 +4,20 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
-class Middleware extends DataProvider
+class Middleware implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the middleware template to run.
      */
@@ -27,6 +37,16 @@ class Middleware extends DataProvider
     }
 
     /**
+     * Get data.
+     */
+    public function get(): Collection
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get middleware-related watcher patterns.
      *
      * @return array<int, string>
@@ -37,13 +57,5 @@ class Middleware extends DataProvider
             'app/Http/Kernel.php',
             'bootstrap/app.php',
         ];
-    }
-
-    /**
-     * Get the default middleware data.
-     */
-    protected function default(): Collection
-    {
-        return collect();
     }
 }

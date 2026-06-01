@@ -4,10 +4,20 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
-class Paths extends DataProvider
+class Paths implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the paths template to run.
      */
@@ -27,6 +37,16 @@ class Paths extends DataProvider
     }
 
     /**
+     * Get data.
+     */
+    public function get(): Collection
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get path-related watcher patterns.
      *
      * @return array<int, string>
@@ -36,13 +56,5 @@ class Paths extends DataProvider
         return [
             'config/{,*,**/*}.php',
         ];
-    }
-
-    /**
-     * Get the default paths data.
-     */
-    protected function default(): Collection
-    {
-        return collect();
     }
 }

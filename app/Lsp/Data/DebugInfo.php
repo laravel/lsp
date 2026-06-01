@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-class DebugInfo extends DataProvider
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
+
+class DebugInfo implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the debug info template to run.
      */
@@ -26,21 +37,23 @@ class DebugInfo extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array<string, string>
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get debug info watcher patterns.
      *
      * @return array<int, string>
      */
     public function patterns(): array
-    {
-        return [];
-    }
-
-    /**
-     * Get the default debug info data.
-     *
-     * @return array<string, string>
-     */
-    protected function default(): array
     {
         return [];
     }

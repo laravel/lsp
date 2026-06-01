@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-class Models extends DataProvider
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
+
+class Models implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the models template to run.
      */
@@ -28,6 +39,18 @@ class Models extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get model-related watcher patterns.
      *
      * @return array<int, string>
@@ -40,15 +63,5 @@ class Models extends DataProvider
             'composer.json',
             'composer.lock',
         ];
-    }
-
-    /**
-     * Get the default model data.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    protected function default(): array
-    {
-        return [];
     }
 }

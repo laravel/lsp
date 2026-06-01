@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-class Configs extends DataProvider
+use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Project;
+
+class Configs implements DataProvider
 {
+    /**
+     * Instantiate a new class instance.
+     */
+    public function __construct(protected Project $project)
+    {
+        //
+    }
+
     /**
      * Get the configs template to run.
      */
@@ -38,6 +49,18 @@ class Configs extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array<string, mixed>
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get config-related watcher patterns.
      *
      * @return array<int, string>
@@ -47,19 +70,6 @@ class Configs extends DataProvider
         return [
             'config/{,*,**/*}.php',
             '.env',
-        ];
-    }
-
-    /**
-     * Get default config data.
-     *
-     * @return array<string, mixed>
-     */
-    protected function default(): array
-    {
-        return [
-            'configs' => collect(),
-            'paths'   => collect(),
         ];
     }
 }

@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
+use App\Lsp\Contracts\DataProvider;
 use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class InertiaViews extends DataProvider
+class InertiaViews implements DataProvider
 {
     /**
      * Create a new inertia views provider instance.
      */
     public function __construct(protected Project $project)
     {
-        parent::__construct($project->scripts);
+        //
     }
 
     /**
@@ -48,6 +49,18 @@ class InertiaViews extends DataProvider
     }
 
     /**
+     * Get data.
+     *
+     * @return array{views: Collection<string, array<string, string>>, page_paths: Collection<int, string>, page_extensions: Collection<int, string>}
+     */
+    public function get(): array
+    {
+        $data = $this->project->scripts->json($this->template());
+
+        return $this->parse(is_array($data) ? $data : []);
+    }
+
+    /**
      * Get inertia-related watcher patterns.
      *
      * @return array<int, string>
@@ -58,20 +71,6 @@ class InertiaViews extends DataProvider
             'resources/js/Pages/{*,**/*}',
             'resources/js/pages/{*,**/*}',
             'config/{,*,**/*}.php',
-        ];
-    }
-
-    /**
-     * Get the default inertia view data.
-     *
-     * @return array{views: Collection<string, array<string, string>>, page_paths: Collection<int, string>, page_extensions: Collection<int, string>}
-     */
-    protected function default(): array
-    {
-        return [
-            'views'           => collect(),
-            'page_paths'      => collect(['resources/js/Pages']),
-            'page_extensions' => collect(['vue']),
         ];
     }
 
