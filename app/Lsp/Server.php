@@ -118,6 +118,10 @@ final class Server
             return;
         }
 
+        if ($request === null) {
+            return;
+        }
+
         $response = $this->dispatch($request);
 
         if (! is_null($response)) {
@@ -171,7 +175,7 @@ final class Server
     /**
      * Decode the request.
      */
-    protected function decode(string $message): JsonRpcRequest
+    protected function decode(string $message): ?JsonRpcRequest
     {
         $payload = json_decode($message, true);
 
@@ -179,7 +183,23 @@ final class Server
             throw new ParseException;
         }
 
+        if ($this->isResponse($payload)) {
+            return null;
+        }
+
         return JsonRpcRequest::from($payload);
+    }
+
+    /**
+     * Determine if the payload is a JSON-RPC response to a server request.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function isResponse(array $payload): bool
+    {
+        return ! isset($payload['method'])
+            && array_key_exists('id', $payload)
+            && (array_key_exists('result', $payload) || array_key_exists('error', $payload));
     }
 
     /**
