@@ -9,7 +9,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\AutocompleteArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class RouteParameterCompletionProvider implements CompletionProvider
@@ -18,7 +18,7 @@ class RouteParameterCompletionProvider implements CompletionProvider
      * Create a new route parameter completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -29,11 +29,11 @@ class RouteParameterCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('routeCompletion', true)) {
+        if (!$this->project->boolean('routeCompletion', true)) {
             return [];
         }
 
-        $routes = $this->workspace->data->routes()->get()->keyBy('name');
+        $routes = $this->project->index->routes()->keyBy('name');
 
         return AutocompleteArguments::in($document, $position)
             ->matching($this->patterns())

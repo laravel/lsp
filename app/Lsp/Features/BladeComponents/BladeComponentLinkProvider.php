@@ -6,7 +6,7 @@ namespace App\Lsp\Features\BladeComponents;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class BladeComponentLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class BladeComponentLinkProvider implements LinkProvider
      * Create a new Blade component link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class BladeComponentLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('bladeComponentLink', true)) {
+        if (!$this->project->boolean('bladeComponentLink', true)) {
             return [];
         }
 
-        return (new BladeComponentDocumentMapper($this->workspace))->links($document);
+        return (new BladeComponentDocumentMapper($this->project))->links($document);
     }
 }

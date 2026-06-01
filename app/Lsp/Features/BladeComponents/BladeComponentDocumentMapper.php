@@ -6,7 +6,7 @@ namespace App\Lsp\Features\BladeComponents;
 
 use App\Lsp\Document;
 use App\Lsp\Support\Position;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class BladeComponentDocumentMapper
@@ -15,7 +15,7 @@ class BladeComponentDocumentMapper
      * Create a new Blade component document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -30,7 +30,7 @@ class BladeComponentDocumentMapper
                 $component = $this->component($match['name']);
                 $path = $this->path($component);
 
-                return $path ? $this->workspace->link($match['range'], $path) : null;
+                return $path ? $this->project->link($match['range'], $path) : null;
             })
             ->filter()
             ->values()
@@ -94,7 +94,7 @@ class BladeComponentDocumentMapper
             return [];
         }
 
-        $components = $this->workspace->data->bladeComponents()->get()['components'] ?? [];
+        $components = $this->project->index->bladeComponents()['components'] ?? [];
 
         return collect(array_keys(is_array($components) ? $components : []))
             ->filter(fn (mixed $key): bool => is_string($key) && $key !== '')
@@ -126,7 +126,7 @@ class BladeComponentDocumentMapper
     protected function matches(Document $document): array
     {
         $matches = [];
-        $prefixes = $this->workspace->data->bladeComponents()->get()['prefixes'] ?? [];
+        $prefixes = $this->project->index->bladeComponents()['prefixes'] ?? [];
         $prefixPattern = collect($prefixes)->filter()->map(fn (string $prefix): string => preg_quote($prefix, '/'))->implode('|');
         $patterns = ['/<\/?x-([^\s>]+)/'];
 
@@ -160,7 +160,7 @@ class BladeComponentDocumentMapper
      */
     protected function component(string $name): ?array
     {
-        $components = $this->workspace->data->bladeComponents()->get()['components'] ?? [];
+        $components = $this->project->index->bladeComponents()['components'] ?? [];
 
         return is_array($components[$name] ?? null) ? $components[$name] : null;
     }
@@ -193,7 +193,7 @@ class BladeComponentDocumentMapper
      */
     protected function componentPrefixes(): Collection
     {
-        $prefixes = $this->workspace->data->bladeComponents()->get()['prefixes'] ?? [];
+        $prefixes = $this->project->index->bladeComponents()['prefixes'] ?? [];
 
         return collect(['x', 'x-'])
             ->merge($prefixes)
@@ -257,6 +257,6 @@ class BladeComponentDocumentMapper
      */
     protected function markdownPath(string $path): string
     {
-        return "[{$path}]({$this->workspace->target($path)})";
+        return "[{$path}]({$this->project->target($path)})";
     }
 }

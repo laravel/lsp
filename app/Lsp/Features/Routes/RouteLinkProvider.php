@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Routes;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class RouteLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class RouteLinkProvider implements LinkProvider
      * Create a new route link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class RouteLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('routeLink', true)) {
+        if (!$this->project->boolean('routeLink', true)) {
             return [];
         }
 
-        return (new RouteDocumentMapper($this->workspace))->links($document);
+        return (new RouteDocumentMapper($this->project))->links($document);
     }
 }

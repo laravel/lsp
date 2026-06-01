@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class ConfigDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class ConfigDocumentMapper extends DocumentMapper
      * Create a new config document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -49,7 +49,7 @@ class ConfigDocumentMapper extends DocumentMapper
         }
 
         return [
-            $this->workspace->link(
+            $this->project->link(
                 $argument->range(),
                 $config['file'],
                 is_numeric($config['line'] ?? null) ? (int) $config['line'] : null,
@@ -82,7 +82,7 @@ class ConfigDocumentMapper extends DocumentMapper
 
         if (is_string($config['file'] ?? null)) {
             $line = is_numeric($config['line'] ?? null) ? (int) $config['line'] : null;
-            $target = $this->workspace->target($config['file'], $line);
+            $target = $this->project->target($config['file'], $line);
 
             $lines[] = "[{$config['file']}]({$target})";
         }
@@ -191,6 +191,6 @@ class ConfigDocumentMapper extends DocumentMapper
      */
     protected function configs(): Collection
     {
-        return $this->workspace->data->configs()->get()['configs'];
+        return $this->project->index->configs()['configs'];
     }
 }

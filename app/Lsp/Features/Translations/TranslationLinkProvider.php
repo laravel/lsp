@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Translations;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class TranslationLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class TranslationLinkProvider implements LinkProvider
      * Create a new translation link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class TranslationLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('translationLink', true)) {
+        if (!$this->project->boolean('translationLink', true)) {
             return [];
         }
 
-        return (new TranslationDocumentMapper($this->workspace))->links($document);
+        return (new TranslationDocumentMapper($this->project))->links($document);
     }
 }

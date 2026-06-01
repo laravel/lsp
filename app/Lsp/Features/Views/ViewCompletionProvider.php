@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Views;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ViewCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class ViewCompletionProvider implements CompletionProvider
      * Create a new view completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class ViewCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('viewCompletion', true)) {
+        if (!$this->project->boolean('viewCompletion', true)) {
             return [];
         }
 
-        return (new ViewDocumentMapper($this->workspace))->completions($document, $position);
+        return (new ViewDocumentMapper($this->project))->completions($document, $position);
     }
 }

@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class MixDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class MixDocumentMapper extends DocumentMapper
      * Create a new mix document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -42,7 +42,7 @@ class MixDocumentMapper extends DocumentMapper
         $item = $this->find($argument);
 
         return $item !== null && is_string($item['path'] ?? null)
-            ? [$this->workspace->link($argument->range(), $item['path'])]
+            ? [$this->project->link($argument->range(), $item['path'])]
             : [];
     }
 
@@ -64,7 +64,7 @@ class MixDocumentMapper extends DocumentMapper
             'range'    => $argument->range(),
             'contents' => [
                 'kind'  => 'markdown',
-                'value' => "[{$item['path']}]({$this->workspace->target($item['path'])})",
+                'value' => "[{$item['path']}]({$this->project->target($item['path'])})",
             ],
         ];
     }
@@ -137,6 +137,6 @@ class MixDocumentMapper extends DocumentMapper
      */
     protected function manifest(): Collection
     {
-        return $this->workspace->data->mixManifest()->get();
+        return $this->project->index->mixManifest();
     }
 }

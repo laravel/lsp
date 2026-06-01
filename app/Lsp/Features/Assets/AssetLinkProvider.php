@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Assets;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AssetLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class AssetLinkProvider implements LinkProvider
      * Create a new asset link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class AssetLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('assetLink', true)) {
+        if (!$this->project->boolean('assetLink', true)) {
             return [];
         }
 
-        return (new AssetDocumentMapper($this->workspace))->links($document);
+        return (new AssetDocumentMapper($this->project))->links($document);
     }
 }

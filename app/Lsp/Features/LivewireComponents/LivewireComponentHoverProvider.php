@@ -6,7 +6,7 @@ namespace App\Lsp\Features\LivewireComponents;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class LivewireComponentHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class LivewireComponentHoverProvider implements HoverProvider
      * Create a new Livewire component hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class LivewireComponentHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('livewireComponentHover', true)) {
+        if (!$this->project->boolean('livewireComponentHover', true)) {
             return null;
         }
 
-        return (new LivewireComponentDocumentMapper($this->workspace))->hover($document, $position);
+        return (new LivewireComponentDocumentMapper($this->project))->hover($document, $position);
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\AppBindings;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AppBindingLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class AppBindingLinkProvider implements LinkProvider
      * Create a new app binding link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class AppBindingLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('appBindingLink', true)) {
+        if (!$this->project->boolean('appBindingLink', true)) {
             return [];
         }
 
-        return (new AppBindingDocumentMapper($this->workspace))->links($document);
+        return (new AppBindingDocumentMapper($this->project))->links($document);
     }
 }

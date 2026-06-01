@@ -11,7 +11,7 @@ use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
 use App\Lsp\Features\Support\DocumentMapper;
 use App\Lsp\Support\Position;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class MiddlewareDocumentMapper extends DocumentMapper
@@ -20,7 +20,7 @@ class MiddlewareDocumentMapper extends DocumentMapper
      * Create a new middleware document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -62,7 +62,7 @@ class MiddlewareDocumentMapper extends DocumentMapper
                 $item = $this->find($this->name($value['value']));
 
                 return is_array($item) && is_string($item['path'] ?? null)
-                    ? $this->workspace->link($value['range'], $item['path'], is_numeric($item['line'] ?? null) ? (int) $item['line'] : null)
+                    ? $this->project->link($value['range'], $item['path'], is_numeric($item['line'] ?? null) ? (int) $item['line'] : null)
                     : null;
             })
             ->filter()
@@ -180,8 +180,7 @@ class MiddlewareDocumentMapper extends DocumentMapper
      */
     protected function middleware(): Collection
     {
-        return $this->workspace->data->middleware()
-            ->get()
+        return $this->project->index->middleware()
             ->map(fn (array $middleware, string $key): array => ['key' => $key, ...$middleware])
             ->values();
     }
@@ -209,6 +208,6 @@ class MiddlewareDocumentMapper extends DocumentMapper
      */
     protected function markdownPath(string $path, ?int $line = null): string
     {
-        return "[{$path}]({$this->workspace->target($path, $line)})";
+        return "[{$path}]({$this->project->target($path, $line)})";
     }
 }

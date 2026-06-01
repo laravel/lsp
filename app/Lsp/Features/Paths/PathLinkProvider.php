@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Paths;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class PathLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class PathLinkProvider implements LinkProvider
      * Create a new path link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class PathLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('pathsLink', true)) {
+        if (!$this->project->boolean('pathsLink', true)) {
             return [];
         }
 
-        return (new PathDocumentMapper($this->workspace))->links($document);
+        return (new PathDocumentMapper($this->project))->links($document);
     }
 }

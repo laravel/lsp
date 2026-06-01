@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Assets;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AssetCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class AssetCompletionProvider implements CompletionProvider
      * Create a new asset completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class AssetCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('assetCompletion', true)) {
+        if (!$this->project->boolean('assetCompletion', true)) {
             return [];
         }
 
-        return (new AssetDocumentMapper($this->workspace))->completions($document, $position);
+        return (new AssetDocumentMapper($this->project))->completions($document, $position);
     }
 }

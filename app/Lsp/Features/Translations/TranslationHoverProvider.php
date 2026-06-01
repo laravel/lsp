@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Translations;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class TranslationHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class TranslationHoverProvider implements HoverProvider
      * Create a new translation hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class TranslationHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('translationHover', true)) {
+        if (!$this->project->boolean('translationHover', true)) {
             return null;
         }
 
-        return (new TranslationDocumentMapper($this->workspace))->hover($document, $position);
+        return (new TranslationDocumentMapper($this->project))->hover($document, $position);
     }
 }

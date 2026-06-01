@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Routes;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class RouteDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class RouteDiagnosticProvider implements DiagnosticProvider
      * Create a new route diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class RouteDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('routeDiagnostics', true)) {
+        if (!$this->project->boolean('routeDiagnostics', true)) {
             return [];
         }
 
-        return (new RouteDocumentMapper($this->workspace))->diagnostics($document);
+        return (new RouteDocumentMapper($this->project))->diagnostics($document);
     }
 }

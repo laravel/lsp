@@ -6,7 +6,7 @@ namespace App\Lsp\Features\BladeComponents;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class BladeComponentCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class BladeComponentCompletionProvider implements CompletionProvider
      * Create a new Blade component completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,7 +25,7 @@ class BladeComponentCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('bladeComponentCompletion', true)) {
+        if (!$this->project->boolean('bladeComponentCompletion', true)) {
             return [];
         }
 
@@ -33,6 +33,6 @@ class BladeComponentCompletionProvider implements CompletionProvider
             return [];
         }
 
-        return (new BladeComponentDocumentMapper($this->workspace))->completions($document, $position);
+        return (new BladeComponentDocumentMapper($this->project))->completions($document, $position);
     }
 }

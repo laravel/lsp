@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class Env extends DataProvider
@@ -12,9 +12,9 @@ class Env extends DataProvider
     /**
      * Create a new env provider instance.
      */
-    public function __construct(protected Workspace $workspace)
+    public function __construct(protected Project $project)
     {
-        parent::__construct($workspace->php);
+        parent::__construct($project->scripts);
     }
 
     /**
@@ -55,7 +55,7 @@ class Env extends DataProvider
         }
 
         $this->loaded = true;
-        $path = $this->workspace->path('.env');
+        $path = $this->project->path('.env');
 
         if (!is_file($path)) {
             return $this->data = collect();

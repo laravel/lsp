@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Storage;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class StorageCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class StorageCompletionProvider implements CompletionProvider
      * Create a new storage completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class StorageCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('storageCompletion', true)) {
+        if (!$this->project->boolean('storageCompletion', true)) {
             return [];
         }
 
-        return (new StorageDocumentMapper($this->workspace))->completions($document, $position);
+        return (new StorageDocumentMapper($this->project))->completions($document, $position);
     }
 }

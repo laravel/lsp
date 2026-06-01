@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Env;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class EnvLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class EnvLinkProvider implements LinkProvider
      * Create a new env link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class EnvLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('envLink', true)) {
+        if (!$this->project->boolean('envLink', true)) {
             return [];
         }
 
-        return (new EnvDocumentMapper($this->workspace))->links($document);
+        return (new EnvDocumentMapper($this->project))->links($document);
     }
 }

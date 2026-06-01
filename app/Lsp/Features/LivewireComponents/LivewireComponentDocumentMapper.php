@@ -6,7 +6,7 @@ namespace App\Lsp\Features\LivewireComponents;
 
 use App\Lsp\Document;
 use App\Lsp\Support\Position;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class LivewireComponentDocumentMapper
@@ -15,7 +15,7 @@ class LivewireComponentDocumentMapper
      * Create a new Livewire component document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -30,7 +30,7 @@ class LivewireComponentDocumentMapper
                 $view = $this->livewireComponent($match['name']);
 
                 return is_array($view) && is_string($view['path'] ?? null)
-                    ? $this->workspace->link($match['range'], $view['path'])
+                    ? $this->project->link($match['range'], $view['path'])
                     : null;
             })
             ->filter()
@@ -60,7 +60,7 @@ class LivewireComponentDocumentMapper
 
             $lines = collect($livewire['files'] ?? [])
                 ->filter(fn (mixed $path): bool => is_string($path))
-                ->map(fn (string $path): string => "[{$path}]({$this->workspace->target($path)})")
+                ->map(fn (string $path): string => "[{$path}]({$this->project->target($path)})")
                 ->all();
 
             $props = collect($livewire['props'] ?? [])
@@ -100,7 +100,7 @@ class LivewireComponentDocumentMapper
             return [];
         }
 
-        return $this->workspace->data->views()->get()
+        return $this->project->index->views()
             ->filter(fn (array $view): bool => ($view['livewire'] ?? null) !== null && is_string($view['key'] ?? null) && $view['key'] !== '')
             ->map(fn (array $view): array => [
                 'label'    => $this->completionLabel($view['key']),
@@ -192,6 +192,6 @@ class LivewireComponentDocumentMapper
      */
     protected function views(): Collection
     {
-        return $this->workspace->data->views()->get();
+        return $this->project->index->views();
     }
 }

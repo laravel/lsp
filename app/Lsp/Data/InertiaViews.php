@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -14,9 +14,9 @@ class InertiaViews extends DataProvider
     /**
      * Create a new inertia views provider instance.
      */
-    public function __construct(protected Workspace $workspace)
+    public function __construct(protected Project $project)
     {
-        parent::__construct($workspace->php);
+        parent::__construct($project->scripts);
     }
 
     /**
@@ -114,7 +114,7 @@ class InertiaViews extends DataProvider
      */
     protected function discoverViews(string $path, Collection $extensions): Collection
     {
-        $absolute = $this->workspace->path($path);
+        $absolute = $this->project->path($path);
 
         if (!is_dir($absolute)) {
             return collect();

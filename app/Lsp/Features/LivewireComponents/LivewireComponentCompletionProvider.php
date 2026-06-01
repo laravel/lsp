@@ -6,7 +6,7 @@ namespace App\Lsp\Features\LivewireComponents;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class LivewireComponentCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class LivewireComponentCompletionProvider implements CompletionProvider
      * Create a new Livewire component completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,7 +25,7 @@ class LivewireComponentCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('livewireComponentCompletion', true)) {
+        if (!$this->project->boolean('livewireComponentCompletion', true)) {
             return [];
         }
 
@@ -33,6 +33,6 @@ class LivewireComponentCompletionProvider implements CompletionProvider
             return [];
         }
 
-        return (new LivewireComponentDocumentMapper($this->workspace))->completions($document, $position);
+        return (new LivewireComponentDocumentMapper($this->project))->completions($document, $position);
     }
 }

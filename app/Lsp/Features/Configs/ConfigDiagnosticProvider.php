@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Configs;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ConfigDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class ConfigDiagnosticProvider implements DiagnosticProvider
      * Create a new config diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ConfigDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('configDiagnostics', true)) {
+        if (!$this->project->boolean('configDiagnostics', true)) {
             return [];
         }
 
-        return (new ConfigDocumentMapper($this->workspace))->diagnostics($document);
+        return (new ConfigDocumentMapper($this->project))->diagnostics($document);
     }
 }

@@ -7,7 +7,7 @@ namespace App\Lsp\Features\Eloquent;
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
 use App\Lsp\Support\FileUri;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class EloquentCompletionProvider implements CompletionProvider
@@ -94,7 +94,7 @@ class EloquentCompletionProvider implements CompletionProvider
      * Create a new Eloquent completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -111,7 +111,7 @@ class EloquentCompletionProvider implements CompletionProvider
             return [];
         }
 
-        $models = collect($this->workspace->data->models()->get());
+        $models = collect($this->project->index->models());
 
         if ($models->isEmpty()) {
             return [];
@@ -268,7 +268,7 @@ class EloquentCompletionProvider implements CompletionProvider
      */
     protected function modelClassForDocument(Document $document, Collection $models): ?string
     {
-        $path = str_replace('\\', '/', $this->workspace->uri()->relativePath(FileUri::of($document->uri)->path()));
+        $path = str_replace('\\', '/', $this->project->uri()->relativePath(FileUri::of($document->uri)->path()));
 
         return $models
             ->first(fn (array $model): bool => str_replace('\\', '/', (string) ($model['path'] ?? '')) === $path)['class'] ?? null;

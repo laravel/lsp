@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class AppBindingDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class AppBindingDocumentMapper extends DocumentMapper
      * Create a new app binding document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -73,7 +73,7 @@ class AppBindingDocumentMapper extends DocumentMapper
         }
 
         return [
-            $this->workspace->link(
+            $this->project->link(
                 $argument->range(),
                 $appBinding['path'],
                 (int) ($appBinding['line'] ?? 1),
@@ -97,7 +97,7 @@ class AppBindingDocumentMapper extends DocumentMapper
 
         $class = (string) ($appBinding['class'] ?? '');
         $path = $appBinding['path'];
-        $target = $this->workspace->target($path, (int) ($appBinding['line'] ?? 1));
+        $target = $this->project->target($path, (int) ($appBinding['line'] ?? 1));
 
         return [
             'range'    => $argument->range(),
@@ -179,8 +179,7 @@ class AppBindingDocumentMapper extends DocumentMapper
      */
     protected function appBindings(): Collection
     {
-        return $this->workspace->data->appBindings()
-            ->get()
+        return $this->project->index->appBindings()
             ->map(fn (array $binding, string $key): array => ['key' => $key, ...$binding])
             ->values();
     }

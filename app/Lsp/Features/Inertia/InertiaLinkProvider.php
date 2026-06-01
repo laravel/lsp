@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Inertia;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class InertiaLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class InertiaLinkProvider implements LinkProvider
      * Create a new Inertia link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class InertiaLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('inertiaLink', true)) {
+        if (!$this->project->boolean('inertiaLink', true)) {
             return [];
         }
 
-        return (new InertiaDocumentMapper($this->workspace))->links($document);
+        return (new InertiaDocumentMapper($this->project))->links($document);
     }
 }

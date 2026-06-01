@@ -6,7 +6,7 @@ namespace App\Lsp\Features\ControllerActions;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ControllerActionCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class ControllerActionCompletionProvider implements CompletionProvider
      * Create a new controller action completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class ControllerActionCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('controllerActionCompletion', true)) {
+        if (!$this->project->boolean('controllerActionCompletion', true)) {
             return [];
         }
 
-        return (new ControllerActionDocumentMapper($this->workspace))->completions($document, $position);
+        return (new ControllerActionDocumentMapper($this->project))->completions($document, $position);
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Storage;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class StorageDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class StorageDiagnosticProvider implements DiagnosticProvider
      * Create a new storage diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class StorageDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('storageDiagnostics', true)) {
+        if (!$this->project->boolean('storageDiagnostics', true)) {
             return [];
         }
 
-        return (new StorageDocumentMapper($this->workspace))->diagnostics($document);
+        return (new StorageDocumentMapper($this->project))->diagnostics($document);
     }
 }

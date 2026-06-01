@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Translations;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class TranslationDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class TranslationDiagnosticProvider implements DiagnosticProvider
      * Create a new translation diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class TranslationDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('translationDiagnostics', true)) {
+        if (!$this->project->boolean('translationDiagnostics', true)) {
             return [];
         }
 
-        return (new TranslationDocumentMapper($this->workspace))->diagnostics($document);
+        return (new TranslationDocumentMapper($this->project))->diagnostics($document);
     }
 }

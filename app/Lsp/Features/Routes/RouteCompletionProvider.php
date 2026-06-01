@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Routes;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class RouteCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class RouteCompletionProvider implements CompletionProvider
      * Create a new route completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class RouteCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('routeCompletion', true)) {
+        if (!$this->project->boolean('routeCompletion', true)) {
             return [];
         }
 
-        return (new RouteDocumentMapper($this->workspace))->completions($document, $position);
+        return (new RouteDocumentMapper($this->project))->completions($document, $position);
     }
 }

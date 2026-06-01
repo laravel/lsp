@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class ViewDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class ViewDocumentMapper extends DocumentMapper
      * Create a new view document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -49,7 +49,7 @@ class ViewDocumentMapper extends DocumentMapper
         $view = $this->find($argument);
 
         return $view !== null && is_string($view['path'] ?? null)
-            ? [$this->workspace->link($argument->range(), $view['path'])]
+            ? [$this->project->link($argument->range(), $view['path'])]
             : [];
     }
 
@@ -71,7 +71,7 @@ class ViewDocumentMapper extends DocumentMapper
             'range'    => $argument->range(),
             'contents' => [
                 'kind'  => 'markdown',
-                'value' => "[{$view['path']}]({$this->workspace->target($view['path'])})",
+                'value' => "[{$view['path']}]({$this->project->target($view['path'])})",
             ],
         ];
     }
@@ -169,6 +169,6 @@ class ViewDocumentMapper extends DocumentMapper
      */
     protected function views(): Collection
     {
-        return $this->workspace->data->views()->get();
+        return $this->project->index->views();
     }
 }

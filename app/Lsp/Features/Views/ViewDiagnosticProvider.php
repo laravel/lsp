@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Views;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ViewDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class ViewDiagnosticProvider implements DiagnosticProvider
      * Create a new view diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ViewDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('viewDiagnostics', true)) {
+        if (!$this->project->boolean('viewDiagnostics', true)) {
             return [];
         }
 
-        return (new ViewDocumentMapper($this->workspace))->diagnostics($document);
+        return (new ViewDocumentMapper($this->project))->diagnostics($document);
     }
 }

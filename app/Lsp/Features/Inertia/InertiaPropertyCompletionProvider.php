@@ -9,7 +9,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\AutocompleteArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class InertiaPropertyCompletionProvider implements CompletionProvider
@@ -18,7 +18,7 @@ class InertiaPropertyCompletionProvider implements CompletionProvider
      * Create a new Inertia property completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class InertiaPropertyCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('inertiaCompletion', true)) {
+        if (!$this->project->boolean('inertiaCompletion', true)) {
             return [];
         }
 
@@ -104,7 +104,7 @@ class InertiaPropertyCompletionProvider implements CompletionProvider
      */
     protected function viewContent(string $path): ?string
     {
-        $absolute = $this->workspace->path($path);
+        $absolute = $this->project->path($path);
 
         if (!is_file($absolute)) {
             return null;
@@ -122,7 +122,7 @@ class InertiaPropertyCompletionProvider implements CompletionProvider
      */
     protected function views(): Collection
     {
-        return $this->workspace->data->inertiaViews()->get()['views']->values();
+        return $this->project->index->inertiaViews()['views']->values();
     }
 
     /**

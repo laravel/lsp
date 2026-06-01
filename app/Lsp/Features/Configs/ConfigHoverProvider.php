@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Configs;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ConfigHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class ConfigHoverProvider implements HoverProvider
      * Create a new config hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class ConfigHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('configHover', true)) {
+        if (!$this->project->boolean('configHover', true)) {
             return null;
         }
 
-        return (new ConfigDocumentMapper($this->workspace))->hover($document, $position);
+        return (new ConfigDocumentMapper($this->project))->hover($document, $position);
     }
 }

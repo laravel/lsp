@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Mix;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MixDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class MixDiagnosticProvider implements DiagnosticProvider
      * Create a new mix diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class MixDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('mixDiagnostics', true)) {
+        if (!$this->project->boolean('mixDiagnostics', true)) {
             return [];
         }
 
-        return (new MixDocumentMapper($this->workspace))->diagnostics($document);
+        return (new MixDocumentMapper($this->project))->diagnostics($document);
     }
 }

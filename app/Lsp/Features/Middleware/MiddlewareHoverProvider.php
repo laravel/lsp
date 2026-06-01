@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Middleware;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MiddlewareHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class MiddlewareHoverProvider implements HoverProvider
      * Create a new middleware hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class MiddlewareHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('middlewareHover', true)) {
+        if (!$this->project->boolean('middlewareHover', true)) {
             return null;
         }
 
-        return (new MiddlewareDocumentMapper($this->workspace))->hover($document, $position);
+        return (new MiddlewareDocumentMapper($this->project))->hover($document, $position);
     }
 }

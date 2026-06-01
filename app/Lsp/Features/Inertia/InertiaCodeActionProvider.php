@@ -8,7 +8,7 @@ use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\CodeActionProvider;
 use App\Lsp\Document;
 use App\Lsp\Support\FileUri;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class InertiaCodeActionProvider implements CodeActionProvider
@@ -17,7 +17,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
      * Create a new Inertia code action provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -68,7 +68,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
     protected function createPageAction(string $path, string $missing, string $extension, array $diagnostic): array
     {
         $relativePath = trim($path, '/') . '/' . ltrim($missing, '/') . ".{$extension}";
-        $uri = (string) FileUri::fromPath($this->workspace->path($relativePath));
+        $uri = (string) FileUri::fromPath($this->project->path($relativePath));
         $contents = $this->contents($extension);
 
         return [
@@ -156,7 +156,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
      */
     protected function pagePaths(): Collection
     {
-        return $this->workspace->data->inertiaViews()->get()['page_paths'];
+        return $this->project->index->inertiaViews()['page_paths'];
     }
 
     /**
@@ -166,7 +166,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
      */
     protected function pageExtensions(): Collection
     {
-        return $this->workspace->data->inertiaViews()->get()['page_extensions'];
+        return $this->project->index->inertiaViews()['page_extensions'];
     }
 
     /**
@@ -176,7 +176,7 @@ class InertiaCodeActionProvider implements CodeActionProvider
      */
     protected function views(): Collection
     {
-        return $this->workspace->data->inertiaViews()->get()['views'];
+        return $this->project->index->inertiaViews()['views'];
     }
 
     /**

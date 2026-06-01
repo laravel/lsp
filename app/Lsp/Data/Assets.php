@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -14,9 +14,9 @@ class Assets extends DataProvider
     /**
      * Create a new assets provider instance.
      */
-    public function __construct(protected Workspace $workspace)
+    public function __construct(protected Project $project)
     {
-        parent::__construct($workspace->php);
+        parent::__construct($project->scripts);
     }
 
     /**
@@ -56,7 +56,7 @@ class Assets extends DataProvider
             return $this->data;
         }
 
-        $public = $this->workspace->path('public');
+        $public = $this->project->path('public');
 
         $this->loaded = true;
 

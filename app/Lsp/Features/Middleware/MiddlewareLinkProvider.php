@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Middleware;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MiddlewareLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class MiddlewareLinkProvider implements LinkProvider
      * Create a new middleware link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class MiddlewareLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('middlewareLink', true)) {
+        if (!$this->project->boolean('middlewareLink', true)) {
             return [];
         }
 
-        return (new MiddlewareDocumentMapper($this->workspace))->links($document);
+        return (new MiddlewareDocumentMapper($this->project))->links($document);
     }
 }

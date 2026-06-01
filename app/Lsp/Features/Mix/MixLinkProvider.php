@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Mix;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MixLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class MixLinkProvider implements LinkProvider
      * Create a new mix link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class MixLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('mixLink', true)) {
+        if (!$this->project->boolean('mixLink', true)) {
             return [];
         }
 
-        return (new MixDocumentMapper($this->workspace))->links($document);
+        return (new MixDocumentMapper($this->project))->links($document);
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\AppBindings;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AppBindingDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class AppBindingDiagnosticProvider implements DiagnosticProvider
      * Create a new app binding diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class AppBindingDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('appBindingDiagnostics', true)) {
+        if (!$this->project->boolean('appBindingDiagnostics', true)) {
             return [];
         }
 
-        return (new AppBindingDocumentMapper($this->workspace))->diagnostics($document);
+        return (new AppBindingDocumentMapper($this->project))->diagnostics($document);
     }
 }

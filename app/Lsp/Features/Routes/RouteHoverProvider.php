@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Routes;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class RouteHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class RouteHoverProvider implements HoverProvider
      * Create a new route hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class RouteHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('routeHover', true)) {
+        if (!$this->project->boolean('routeHover', true)) {
             return null;
         }
 
-        return (new RouteDocumentMapper($this->workspace))->hover($document, $position);
+        return (new RouteDocumentMapper($this->project))->hover($document, $position);
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Storage;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class StorageLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class StorageLinkProvider implements LinkProvider
      * Create a new storage link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class StorageLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('storageLink', true)) {
+        if (!$this->project->boolean('storageLink', true)) {
             return [];
         }
 
-        return (new StorageDocumentMapper($this->workspace))->links($document);
+        return (new StorageDocumentMapper($this->project))->links($document);
     }
 }

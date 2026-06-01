@@ -8,7 +8,7 @@ use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\CodeActionProvider;
 use App\Lsp\Document;
 use App\Lsp\Support\FileUri;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ViewCodeActionProvider implements CodeActionProvider
 {
@@ -16,7 +16,7 @@ class ViewCodeActionProvider implements CodeActionProvider
      * Create a new view code action provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -62,7 +62,7 @@ class ViewCodeActionProvider implements CodeActionProvider
     protected function createViewAction(string $missing, array $diagnostic): array
     {
         $relativePath = 'resources/views/' . str_replace('.', '/', $missing) . '.blade.php';
-        $uri = (string) FileUri::fromPath($this->workspace->path($relativePath));
+        $uri = (string) FileUri::fromPath($this->project->path($relativePath));
 
         return [
             'title'       => 'Create missing view',

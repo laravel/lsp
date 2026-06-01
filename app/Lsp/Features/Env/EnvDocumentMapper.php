@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class EnvDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class EnvDocumentMapper extends DocumentMapper
      * Create a new env document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -44,7 +44,7 @@ class EnvDocumentMapper extends DocumentMapper
 
         return $item === null
             ? []
-            : [$this->workspace->link($argument->range(), '.env', (int) $item['lineNumber'])];
+            : [$this->project->link($argument->range(), '.env', (int) $item['lineNumber'])];
     }
 
     /**
@@ -141,8 +141,7 @@ class EnvDocumentMapper extends DocumentMapper
      */
     protected function env(): Collection
     {
-        return $this->workspace->data->env()
-            ->get()
+        return $this->project->index->env()
             ->map(fn (array $item, string $key): array => ['key' => $key, ...$item])
             ->values();
     }

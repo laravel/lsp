@@ -9,7 +9,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\AutocompleteArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class TranslationLocaleCompletionProvider implements CompletionProvider
@@ -18,7 +18,7 @@ class TranslationLocaleCompletionProvider implements CompletionProvider
      * Create a new translation locale completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class TranslationLocaleCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('translationCompletion', true)) {
+        if (!$this->project->boolean('translationCompletion', true)) {
             return [];
         }
 
@@ -105,7 +105,7 @@ class TranslationLocaleCompletionProvider implements CompletionProvider
      */
     protected function languages(): Collection
     {
-        return collect($this->workspace->data->translations()->get()['languages'] ?? [])
+        return collect($this->project->index->translations()['languages'] ?? [])
             ->filter(fn (mixed $language): bool => is_string($language) && $language !== '')
             ->values();
     }

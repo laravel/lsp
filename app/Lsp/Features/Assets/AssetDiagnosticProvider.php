@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Assets;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AssetDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class AssetDiagnosticProvider implements DiagnosticProvider
      * Create a new asset diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class AssetDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('assetDiagnostics', true)) {
+        if (!$this->project->boolean('assetDiagnostics', true)) {
             return [];
         }
 
-        return (new AssetDocumentMapper($this->workspace))->diagnostics($document);
+        return (new AssetDocumentMapper($this->project))->diagnostics($document);
     }
 }

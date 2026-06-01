@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Views;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ViewLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class ViewLinkProvider implements LinkProvider
      * Create a new view link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ViewLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('viewLink', true)) {
+        if (!$this->project->boolean('viewLink', true)) {
             return [];
         }
 
-        return (new ViewDocumentMapper($this->workspace))->links($document);
+        return (new ViewDocumentMapper($this->project))->links($document);
     }
 }

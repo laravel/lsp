@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class TranslationDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class TranslationDocumentMapper extends DocumentMapper
      * Create a new translation document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -52,7 +52,7 @@ class TranslationDocumentMapper extends DocumentMapper
         $item = $translation[$lang] ?? $translation[$default] ?? reset($translation);
 
         return is_array($item) && is_string($item['path'] ?? null)
-            ? [$this->workspace->link($argument->range(), $item['path'], is_numeric($item['line'] ?? null) ? (int) $item['line'] : null)]
+            ? [$this->project->link($argument->range(), $item['path'], is_numeric($item['line'] ?? null) ? (int) $item['line'] : null)]
             : [];
     }
 
@@ -173,7 +173,7 @@ class TranslationDocumentMapper extends DocumentMapper
      */
     protected function markdownPath(string $path, ?int $line = null): string
     {
-        return "[{$path}]({$this->workspace->target($path, $line)})";
+        return "[{$path}]({$this->project->target($path, $line)})";
     }
 
     /**
@@ -256,6 +256,6 @@ class TranslationDocumentMapper extends DocumentMapper
      */
     protected function translationData(): array
     {
-        return $this->workspace->data->translations()->get();
+        return $this->project->index->translations();
     }
 }

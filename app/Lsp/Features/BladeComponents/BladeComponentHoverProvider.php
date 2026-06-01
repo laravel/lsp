@@ -6,7 +6,7 @@ namespace App\Lsp\Features\BladeComponents;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class BladeComponentHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class BladeComponentHoverProvider implements HoverProvider
      * Create a new Blade component hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class BladeComponentHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('bladeComponentHover', true)) {
+        if (!$this->project->boolean('bladeComponentHover', true)) {
             return null;
         }
 
-        return (new BladeComponentDocumentMapper($this->workspace))->hover($document, $position);
+        return (new BladeComponentDocumentMapper($this->project))->hover($document, $position);
     }
 }

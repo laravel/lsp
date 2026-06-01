@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Lsp\Watchers;
 
 use App\Lsp\Contracts\FileWatcher;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Throwable;
 
 class PestHelperWatcher implements FileWatcher
@@ -13,7 +13,7 @@ class PestHelperWatcher implements FileWatcher
     /**
      * Create a new Pest helper watcher instance.
      */
-    public function __construct(protected Workspace $workspace)
+    public function __construct(protected Project $project)
     {
         //
     }
@@ -58,7 +58,7 @@ class PestHelperWatcher implements FileWatcher
      */
     protected function enabled(): bool
     {
-        return $this->workspace->config->boolean('pestGenerateDocBlocks', true);
+        return $this->project->boolean('pestGenerateDocBlocks', true);
     }
 
     /**
@@ -71,7 +71,7 @@ class PestHelperWatcher implements FileWatcher
         }
 
         try {
-            $pest = $this->workspace->php->json($this->template());
+            $pest = $this->project->scripts->json($this->template());
 
             if (!is_array($pest)) {
                 return;
@@ -113,10 +113,10 @@ class PestHelperWatcher implements FileWatcher
      */
     protected function helperFilePath(): string
     {
-        $options = $this->workspace->config->all();
+        $options = $this->project->all();
         $relativePath = $options['pestHelperFilePath'] ?? 'storage/framework/testing/_pest.php';
 
-        return $this->workspace->path(is_string($relativePath) ? $relativePath : 'storage/framework/testing/_pest.php');
+        return $this->project->path(is_string($relativePath) ? $relativePath : 'storage/framework/testing/_pest.php');
     }
 
     /**

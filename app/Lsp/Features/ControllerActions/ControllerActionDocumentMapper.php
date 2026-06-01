@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class ControllerActionDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class ControllerActionDocumentMapper extends DocumentMapper
      * Create a new controller action document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -50,7 +50,7 @@ class ControllerActionDocumentMapper extends DocumentMapper
         }
 
         return [
-            $this->workspace->link(
+            $this->project->link(
                 $argument->range(),
                 $route['filename'],
                 is_numeric($route['line'] ?? null) ? (int) $route['line'] : null,
@@ -141,7 +141,7 @@ class ControllerActionDocumentMapper extends DocumentMapper
      */
     protected function routes(): Collection
     {
-        return $this->workspace->data->routes()->get();
+        return $this->project->index->routes();
     }
 
     /**
@@ -151,6 +151,6 @@ class ControllerActionDocumentMapper extends DocumentMapper
      */
     protected function controllers(): Collection
     {
-        return $this->workspace->data->controllers()->get();
+        return $this->project->index->controllers();
     }
 }

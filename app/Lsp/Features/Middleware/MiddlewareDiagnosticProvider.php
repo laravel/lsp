@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Middleware;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MiddlewareDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class MiddlewareDiagnosticProvider implements DiagnosticProvider
      * Create a new middleware diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class MiddlewareDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('middlewareDiagnostics', true)) {
+        if (!$this->project->boolean('middlewareDiagnostics', true)) {
             return [];
         }
 
-        return (new MiddlewareDocumentMapper($this->workspace))->diagnostics($document);
+        return (new MiddlewareDocumentMapper($this->project))->diagnostics($document);
     }
 }

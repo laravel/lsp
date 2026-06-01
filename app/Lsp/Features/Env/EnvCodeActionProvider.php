@@ -8,7 +8,7 @@ use App\Lsp\CodeActions\CodeActionContext;
 use App\Lsp\Contracts\CodeActionProvider;
 use App\Lsp\Document;
 use App\Lsp\Support\FileUri;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class EnvCodeActionProvider implements CodeActionProvider
 {
@@ -16,7 +16,7 @@ class EnvCodeActionProvider implements CodeActionProvider
      * Create a new env code action provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -51,7 +51,7 @@ class EnvCodeActionProvider implements CodeActionProvider
      */
     protected function viteEnvAction(Document $document, CodeActionContext $context): ?array
     {
-        if (!$this->workspace->config->boolean('envViteQuickFix', true) || !$this->isEnvDocument($document)) {
+        if (!$this->project->boolean('envViteQuickFix', true) || !$this->isEnvDocument($document)) {
             return null;
         }
 
@@ -230,7 +230,7 @@ class EnvCodeActionProvider implements CodeActionProvider
      */
     protected function addFromExample(string $missing, array $diagnostic): ?array
     {
-        $example = $this->envFileVariables($this->workspace->path('.env.example'));
+        $example = $this->envFileVariables($this->project->path('.env.example'));
 
         if (!array_key_exists($missing, $example)) {
             return null;
@@ -260,7 +260,7 @@ class EnvCodeActionProvider implements CodeActionProvider
     ): array {
         [$line, $prefix] = $this->insertionPoint($missing);
 
-        $uri = (string) FileUri::fromPath($this->workspace->path('.env'));
+        $uri = (string) FileUri::fromPath($this->project->path('.env'));
         $value = "{$missing}={$value}\n";
 
         return [
@@ -300,7 +300,7 @@ class EnvCodeActionProvider implements CodeActionProvider
      */
     protected function insertionPoint(string $missing): array
     {
-        $lines = $this->envLines($this->workspace->path('.env'));
+        $lines = $this->envLines($this->project->path('.env'));
         $variablePrefix = explode('_', $missing)[0] . '_';
         $lineNumber = count($lines);
         $foundGroup = false;

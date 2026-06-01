@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Configs;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ConfigLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class ConfigLinkProvider implements LinkProvider
      * Create a new config link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ConfigLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('configLink', true)) {
+        if (!$this->project->boolean('configLink', true)) {
             return [];
         }
 
-        return (new ConfigDocumentMapper($this->workspace))->links($document);
+        return (new ConfigDocumentMapper($this->project))->links($document);
     }
 }

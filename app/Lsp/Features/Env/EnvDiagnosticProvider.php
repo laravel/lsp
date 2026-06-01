@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Env;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class EnvDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class EnvDiagnosticProvider implements DiagnosticProvider
      * Create a new env diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class EnvDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('envDiagnostics', true)) {
+        if (!$this->project->boolean('envDiagnostics', true)) {
             return [];
         }
 
-        return (new EnvDocumentMapper($this->workspace))->diagnostics($document);
+        return (new EnvDocumentMapper($this->project))->diagnostics($document);
     }
 }

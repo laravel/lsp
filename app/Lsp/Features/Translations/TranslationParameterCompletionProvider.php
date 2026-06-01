@@ -9,7 +9,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\AutocompleteArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class TranslationParameterCompletionProvider implements CompletionProvider
@@ -18,7 +18,7 @@ class TranslationParameterCompletionProvider implements CompletionProvider
      * Create a new translation parameter completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class TranslationParameterCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('translationCompletion', true)) {
+        if (!$this->project->boolean('translationCompletion', true)) {
             return [];
         }
 
@@ -143,6 +143,6 @@ class TranslationParameterCompletionProvider implements CompletionProvider
      */
     protected function translationData(): array
     {
-        return $this->workspace->data->translations()->get();
+        return $this->project->index->translations();
     }
 }

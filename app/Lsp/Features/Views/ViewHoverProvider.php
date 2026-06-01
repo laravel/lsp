@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Views;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ViewHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class ViewHoverProvider implements HoverProvider
      * Create a new view hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class ViewHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('viewHover', true)) {
+        if (!$this->project->boolean('viewHover', true)) {
             return null;
         }
 
-        return (new ViewDocumentMapper($this->workspace))->hover($document, $position);
+        return (new ViewDocumentMapper($this->project))->hover($document, $position);
     }
 }

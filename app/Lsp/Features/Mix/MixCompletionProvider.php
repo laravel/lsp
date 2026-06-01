@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Mix;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MixCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class MixCompletionProvider implements CompletionProvider
      * Create a new mix completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class MixCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('mixCompletion', true)) {
+        if (!$this->project->boolean('mixCompletion', true)) {
             return [];
         }
 
-        return (new MixDocumentMapper($this->workspace))->completions($document, $position);
+        return (new MixDocumentMapper($this->project))->completions($document, $position);
     }
 }

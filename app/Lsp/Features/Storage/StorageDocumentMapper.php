@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class StorageDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class StorageDocumentMapper extends DocumentMapper
      * Create a new storage document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -47,7 +47,7 @@ class StorageDocumentMapper extends DocumentMapper
         }
 
         return [
-            $this->workspace->link(
+            $this->project->link(
                 $argument->range(),
                 $disk['file'],
                 is_numeric($disk['line'] ?? null) ? (int) $disk['line'] : null,
@@ -134,8 +134,7 @@ class StorageDocumentMapper extends DocumentMapper
      */
     protected function disks(): Collection
     {
-        return $this->workspace->data->configs()
-            ->get()['configs']
+        return $this->project->index->configs()['configs']
             ->filter(fn (array $config): bool => str_starts_with((string) ($config['name'] ?? ''), 'filesystems.disks.'))
             ->map(fn (array $config): array => [
                 'disk' => str_replace('filesystems.disks.', '', (string) $config['name']),

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Middleware;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MiddlewareCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class MiddlewareCompletionProvider implements CompletionProvider
      * Create a new middleware completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class MiddlewareCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('middlewareCompletion', true)) {
+        if (!$this->project->boolean('middlewareCompletion', true)) {
             return [];
         }
 
-        return (new MiddlewareDocumentMapper($this->workspace))->completions($document, $position);
+        return (new MiddlewareDocumentMapper($this->project))->completions($document, $position);
     }
 }

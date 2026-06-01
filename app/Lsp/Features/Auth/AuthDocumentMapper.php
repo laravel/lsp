@@ -11,7 +11,7 @@ use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
 use App\Lsp\Features\Support\DocumentMapper;
 use App\Lsp\Support\Position;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class AuthDocumentMapper extends DocumentMapper
@@ -20,7 +20,7 @@ class AuthDocumentMapper extends DocumentMapper
      * Create a new auth document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -70,7 +70,7 @@ class AuthDocumentMapper extends DocumentMapper
 
                 $policy = $policies->first();
 
-                return $this->workspace->link($value['range'], $policy['uri'], $policy['line']);
+                return $this->project->link($value['range'], $policy['uri'], $policy['line']);
             })
             ->filter()
             ->values()
@@ -230,7 +230,7 @@ class AuthDocumentMapper extends DocumentMapper
      */
     protected function policies(): Collection
     {
-        return collect($this->workspace->data->auth()->get()['policies'] ?? [])
+        return collect($this->project->index->auth()['policies'] ?? [])
             ->map(fn (array $policies, string $ability): array => [
                 'ability'  => $ability,
                 'policies' => collect($policies),
@@ -266,7 +266,7 @@ class AuthDocumentMapper extends DocumentMapper
 
         $lines = $policies->map(fn (array $policy): string => implode("\n\n", array_filter([
             $policy['policy'] !== null ? "`{$policy['policy']}`" : null,
-            "[{$policy['uri']}]({$this->workspace->target($policy['uri'], $policy['line'])})",
+            "[{$policy['uri']}]({$this->project->target($policy['uri'], $policy['line'])})",
         ])))->values()->all();
 
         return [

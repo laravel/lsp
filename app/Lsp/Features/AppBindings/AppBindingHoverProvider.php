@@ -6,7 +6,7 @@ namespace App\Lsp\Features\AppBindings;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AppBindingHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class AppBindingHoverProvider implements HoverProvider
      * Create a new app binding hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class AppBindingHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('appBindingHover', true)) {
+        if (!$this->project->boolean('appBindingHover', true)) {
             return null;
         }
 
-        return (new AppBindingDocumentMapper($this->workspace))->hover($document, $position);
+        return (new AppBindingDocumentMapper($this->project))->hover($document, $position);
     }
 }

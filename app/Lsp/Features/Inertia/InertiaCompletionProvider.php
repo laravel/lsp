@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Inertia;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class InertiaCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class InertiaCompletionProvider implements CompletionProvider
      * Create a new Inertia completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class InertiaCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('inertiaCompletion', true)) {
+        if (!$this->project->boolean('inertiaCompletion', true)) {
             return [];
         }
 
-        return (new InertiaDocumentMapper($this->workspace))->completions($document, $position);
+        return (new InertiaDocumentMapper($this->project))->completions($document, $position);
     }
 }

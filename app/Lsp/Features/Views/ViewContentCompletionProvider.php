@@ -9,7 +9,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\AutocompleteArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class ViewContentCompletionProvider implements CompletionProvider
@@ -18,7 +18,7 @@ class ViewContentCompletionProvider implements CompletionProvider
      * Create a new Content view completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class ViewContentCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('viewCompletion', true)) {
+        if (!$this->project->boolean('viewCompletion', true)) {
             return [];
         }
 
@@ -99,6 +99,6 @@ class ViewContentCompletionProvider implements CompletionProvider
      */
     protected function views(): Collection
     {
-        return $this->workspace->data->views()->get();
+        return $this->project->index->views();
     }
 }

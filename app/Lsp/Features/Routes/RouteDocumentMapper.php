@@ -8,7 +8,7 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class RouteDocumentMapper extends DocumentMapper
@@ -17,7 +17,7 @@ class RouteDocumentMapper extends DocumentMapper
      * Create a new route document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -110,7 +110,7 @@ class RouteDocumentMapper extends DocumentMapper
 
             return [[
                 'range'  => $argument->range(),
-                'target' => $this->workspace->target($view['path']),
+                'target' => $this->project->target($view['path']),
             ]];
         }
 
@@ -122,7 +122,7 @@ class RouteDocumentMapper extends DocumentMapper
 
         return [[
             'range'  => $argument->range(),
-            'target' => $this->workspace->target($route['filename'], (int) ($route['line'] ?? 1)),
+            'target' => $this->project->target($route['filename'], (int) ($route['line'] ?? 1)),
         ]];
     }
 
@@ -144,7 +144,7 @@ class RouteDocumentMapper extends DocumentMapper
             ? '[Closure]'
             : (string) ($route['action'] ?? '');
         $filename = $route['filename'];
-        $target = $this->workspace->target($filename);
+        $target = $this->project->target($filename);
 
         return [
             'range'    => $argument->range(),
@@ -239,7 +239,7 @@ class RouteDocumentMapper extends DocumentMapper
      */
     protected function routes(): Collection
     {
-        return $this->workspace->data->routes()->get();
+        return $this->project->index->routes();
     }
 
     /**
@@ -271,8 +271,7 @@ class RouteDocumentMapper extends DocumentMapper
      */
     protected function voltView(string $component): ?array
     {
-        $view = $this->workspace->data->views()
-            ->get()
+        $view = $this->project->index->views()
             ->firstWhere('key', "livewire.{$component}");
 
         return is_array($view) ? $view : null;

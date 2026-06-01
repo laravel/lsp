@@ -6,7 +6,7 @@ namespace App\Lsp\Features\ControllerActions;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ControllerActionDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class ControllerActionDiagnosticProvider implements DiagnosticProvider
      * Create a new controller action diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ControllerActionDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('controllerActionDiagnostics', true)) {
+        if (!$this->project->boolean('controllerActionDiagnostics', true)) {
             return [];
         }
 
-        return (new ControllerActionDocumentMapper($this->workspace))->diagnostics($document);
+        return (new ControllerActionDocumentMapper($this->project))->diagnostics($document);
     }
 }

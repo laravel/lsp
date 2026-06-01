@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Mix;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class MixHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class MixHoverProvider implements HoverProvider
      * Create a new mix hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class MixHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('mixHover', true)) {
+        if (!$this->project->boolean('mixHover', true)) {
             return null;
         }
 
-        return (new MixDocumentMapper($this->workspace))->hover($document, $position);
+        return (new MixDocumentMapper($this->project))->hover($document, $position);
     }
 }

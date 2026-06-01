@@ -6,7 +6,7 @@ namespace App\Lsp\Features\LivewireComponents;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class LivewireComponentLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class LivewireComponentLinkProvider implements LinkProvider
      * Create a new Livewire component link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class LivewireComponentLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('livewireComponentLink', true)) {
+        if (!$this->project->boolean('livewireComponentLink', true)) {
             return [];
         }
 
-        return (new LivewireComponentDocumentMapper($this->workspace))->links($document);
+        return (new LivewireComponentDocumentMapper($this->project))->links($document);
     }
 }

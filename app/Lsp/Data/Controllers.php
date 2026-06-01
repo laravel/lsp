@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -14,9 +14,9 @@ class Controllers extends DataProvider
     /**
      * Create a new controllers provider instance.
      */
-    public function __construct(protected Workspace $workspace)
+    public function __construct(protected Project $project)
     {
-        parent::__construct($workspace->php);
+        parent::__construct($project->scripts);
     }
 
     /**
@@ -60,7 +60,7 @@ class Controllers extends DataProvider
         }
 
         $this->loaded = true;
-        $path = $this->workspace->path('app/Http/Controllers');
+        $path = $this->project->path('app/Http/Controllers');
 
         if (!is_dir($path)) {
             return $this->data = collect();

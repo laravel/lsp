@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Inertia;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class InertiaDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class InertiaDiagnosticProvider implements DiagnosticProvider
      * Create a new Inertia diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class InertiaDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('inertiaDiagnostics', true)) {
+        if (!$this->project->boolean('inertiaDiagnostics', true)) {
             return [];
         }
 
-        return (new InertiaDocumentMapper($this->workspace))->diagnostics($document);
+        return (new InertiaDocumentMapper($this->project))->diagnostics($document);
     }
 }

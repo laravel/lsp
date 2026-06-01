@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Auth;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AuthHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class AuthHoverProvider implements HoverProvider
      * Create a new auth hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class AuthHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('authHover', true)) {
+        if (!$this->project->boolean('authHover', true)) {
             return null;
         }
 
-        return (new AuthDocumentMapper($this->workspace))->hover($document, $position);
+        return (new AuthDocumentMapper($this->project))->hover($document, $position);
     }
 }

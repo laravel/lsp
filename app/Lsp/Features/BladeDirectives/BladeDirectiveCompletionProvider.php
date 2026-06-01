@@ -6,7 +6,7 @@ namespace App\Lsp\Features\BladeDirectives;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class BladeDirectiveCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class BladeDirectiveCompletionProvider implements CompletionProvider
      * Create a new Blade directive completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -73,7 +73,7 @@ class BladeDirectiveCompletionProvider implements CompletionProvider
      */
     protected function customDirectiveCompletions(array $range): array
     {
-        return collect($this->workspace->data->customBladeDirectives()->get())
+        return collect($this->project->index->customBladeDirectives())
             ->map(fn (array $directive): array => $this->completionItem(
                 '@' . $directive['name'] . ($directive['hasParams'] ? '(...)' : ''),
                 '@' . $directive['name'] . ($directive['hasParams'] ? '(${1})' : ''),

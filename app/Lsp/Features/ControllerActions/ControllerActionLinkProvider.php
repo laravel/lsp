@@ -6,7 +6,7 @@ namespace App\Lsp\Features\ControllerActions;
 
 use App\Lsp\Contracts\LinkProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ControllerActionLinkProvider implements LinkProvider
 {
@@ -14,7 +14,7 @@ class ControllerActionLinkProvider implements LinkProvider
      * Create a new controller action link provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class ControllerActionLinkProvider implements LinkProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('controllerActionLink', true)) {
+        if (!$this->project->boolean('controllerActionLink', true)) {
             return [];
         }
 
-        return (new ControllerActionDocumentMapper($this->workspace))->links($document);
+        return (new ControllerActionDocumentMapper($this->project))->links($document);
     }
 }

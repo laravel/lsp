@@ -9,7 +9,7 @@ use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
 use App\Lsp\Support\FileUri;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
 class PathDocumentMapper extends DocumentMapper
@@ -18,7 +18,7 @@ class PathDocumentMapper extends DocumentMapper
      * Create a new path document mapper instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -98,6 +98,6 @@ class PathDocumentMapper extends DocumentMapper
      */
     protected function paths(): Collection
     {
-        return $this->workspace->data->paths()->get();
+        return $this->project->index->paths();
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Env;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class EnvHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class EnvHoverProvider implements HoverProvider
      * Create a new env hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class EnvHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('envHover', true)) {
+        if (!$this->project->boolean('envHover', true)) {
             return null;
         }
 
-        return (new EnvDocumentMapper($this->workspace))->hover($document, $position);
+        return (new EnvDocumentMapper($this->project))->hover($document, $position);
     }
 }

@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Configs;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class ConfigCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class ConfigCompletionProvider implements CompletionProvider
      * Create a new config completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class ConfigCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('configCompletion', true)) {
+        if (!$this->project->boolean('configCompletion', true)) {
             return [];
         }
 
-        return (new ConfigDocumentMapper($this->workspace))->completions($document, $position);
+        return (new ConfigDocumentMapper($this->project))->completions($document, $position);
     }
 }

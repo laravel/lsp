@@ -6,7 +6,7 @@ namespace App\Lsp\Features\AppBindings;
 
 use App\Lsp\Contracts\CompletionProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AppBindingCompletionProvider implements CompletionProvider
 {
@@ -14,7 +14,7 @@ class AppBindingCompletionProvider implements CompletionProvider
      * Create a new app binding completion provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class AppBindingCompletionProvider implements CompletionProvider
      */
     public function get(Document $document, array $position): array
     {
-        if (!$this->workspace->config->boolean('appBindingCompletion', true)) {
+        if (!$this->project->boolean('appBindingCompletion', true)) {
             return [];
         }
 
-        return (new AppBindingDocumentMapper($this->workspace))->completions($document, $position);
+        return (new AppBindingDocumentMapper($this->project))->completions($document, $position);
     }
 }

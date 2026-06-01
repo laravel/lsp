@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Inertia;
 
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class InertiaHoverProvider implements HoverProvider
 {
@@ -14,7 +14,7 @@ class InertiaHoverProvider implements HoverProvider
      * Create a new Inertia hover provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -25,10 +25,10 @@ class InertiaHoverProvider implements HoverProvider
      */
     public function get(Document $document, array $position): ?array
     {
-        if (!$this->workspace->config->boolean('inertiaHover', true)) {
+        if (!$this->project->boolean('inertiaHover', true)) {
             return null;
         }
 
-        return (new InertiaDocumentMapper($this->workspace))->hover($document, $position);
+        return (new InertiaDocumentMapper($this->project))->hover($document, $position);
     }
 }

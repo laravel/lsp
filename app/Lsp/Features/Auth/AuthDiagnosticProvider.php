@@ -6,7 +6,7 @@ namespace App\Lsp\Features\Auth;
 
 use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Document;
-use App\Lsp\Workspace;
+use App\Lsp\Project;
 
 class AuthDiagnosticProvider implements DiagnosticProvider
 {
@@ -14,7 +14,7 @@ class AuthDiagnosticProvider implements DiagnosticProvider
      * Create a new auth diagnostic provider instance.
      */
     public function __construct(
-        protected Workspace $workspace,
+        protected Project $project,
     ) {}
 
     /**
@@ -24,10 +24,10 @@ class AuthDiagnosticProvider implements DiagnosticProvider
      */
     public function get(Document $document): array
     {
-        if (!$this->workspace->config->boolean('authDiagnostics', true)) {
+        if (!$this->project->boolean('authDiagnostics', true)) {
             return [];
         }
 
-        return (new AuthDocumentMapper($this->workspace))->diagnostics($document);
+        return (new AuthDocumentMapper($this->project))->diagnostics($document);
     }
 }
