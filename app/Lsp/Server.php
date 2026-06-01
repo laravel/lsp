@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Lsp;
 
 use App\Lsp\Contracts\ExceptionHandler;
@@ -251,6 +253,7 @@ final class Server
      */
     protected function registerBaseBindings(): void
     {
+        $this->container->instance(Container::class, $this->container);
         $this->container->instance(Server::class, $this);
         $this->container->instance(Transport::class, $this->transport);
         $this->container->instance(LoggerInterface::class, $this->logger);
