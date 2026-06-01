@@ -17,18 +17,18 @@ When working on the LSP server, do not write test plans or tests unless explicit
 - The server communicates over stdio using JSON-RPC/LSP framing.
 - `Server` owns message dispatch, lifecycle handling, request routing, and notification listeners.
 - Request handlers live in `app/Lsp/Methods/`; notification listeners live in `app/Lsp/Listeners/`.
-- `Workspace` owns initialized project URI/path state, open documents, the PHP runner, workspace configuration, access to the active `Server`, holds `WorkspaceData` for project data access, and exposes `FeatureRegistry` for LSP feature providers.
-- `WorkspaceConfiguration` stores LSP `initializationOptions` and configuration updates; use its `InteractsWithData` helpers for feature flags.
+- `Project` owns initialized project URI/path state through `FileUri`, initialization options, the `ScriptRunner`, and the `ProjectIndex` for project data access.
+- `Project` stores LSP `initializationOptions`; use its `InteractsWithData` helpers for feature flags and configuration values.
 - `DocumentManager` tracks open editor documents, while `Document` owns cached parser-backed analysis for the current document version.
-- `WorkspaceData` manages workspace data providers, receives the `Workspace` for path context, and invalidates matching providers after watched-file changes. Watched-file notifications should invalidate provider data only unless a feature explicitly needs broader refresh behavior.
+- `ProjectIndex` manages project data providers, receives the container for provider construction, and invalidates matching provider data after watched-file changes. Watched-file notifications should invalidate provider data only unless a feature explicitly needs broader refresh behavior.
 - `DataProvider` implementations expose project facts such as routes and views, and own template loading, parsing, watcher patterns, changed-path matching, and cache state.
 - When a project fact needs a reusable shaped view, put small helper accessors directly on the relevant `DataProvider`, such as `Auth::policies()`, so feature providers can reuse normalized data without duplicating collection shaping.
 - LSP feature behavior is exposed through provider contracts in `app/Lsp/Contracts/` such as `LinkProvider`, `HoverProvider`, `DiagnosticProvider`, and `CompletionProvider`.
-- `FeatureRegistry` constructs the active providers for each LSP capability. Request handlers and listeners should call `$workspace->features` instead of directly instantiating domain providers.
+- `FeatureRegistry` constructs the active providers for each LSP capability. Request handlers and listeners should use the injected `FeatureRegistry` instead of directly instantiating domain providers.
 - Domain features should follow the existing provider structure for their capability. Some features expose one feature class through adapters such as `LinkFeature`, `HoverFeature`, and `DiagnosticFeature`; others, such as routes, expose separate `LinkProvider`, `HoverProvider`, and `DiagnosticProvider` classes that are constructed directly by `FeatureRegistry`.
 - Feature providers should stay thin when shared document mapping exists. For routes, `RouteLinkProvider`, `RouteHoverProvider`, and `RouteDiagnosticProvider` own capability-specific configuration checks, while `RouteDocumentMapper` owns route argument detection, accepted argument filtering, route lookup, Volt component lookup, and conversion to links, hovers, and diagnostics.
 - Shared mapper-style features should put reusable document traversal in `app/Lsp/Features/Support/DocumentMapper`, keep domain patterns and output conversion in the domain mapper, and use `DetectedArguments` with `Pattern` so features act only on parser-detected arguments.
-- Completion providers should follow the same capability-provider shape as links, hovers, and diagnostics: request handlers call `$workspace->features`, and feature providers own configuration gates.
+- Completion providers should follow the same capability-provider shape as links, hovers, and diagnostics: request handlers use `FeatureRegistry`, and feature providers own configuration gates.
 - Keep feature providers thin when a mapper exists. Providers should usually check config, construct the mapper or selector, and return the capability result.
 - `Document::detect()` is for completed document analysis; `Document::autocomplete($position)` is for incomplete cursor context and should parse content up to the cursor.
 - Use `DetectedArguments` and `DetectedArgument` for full-document references such as links, hovers, and diagnostics.
@@ -45,7 +45,7 @@ When working on the LSP server, do not write test plans or tests unless explicit
 - Prefer parser and template contracts over defensive array probing. Once data has passed through `DetectedArguments`, `Pattern`, or a shaped `DataProvider` accessor, read the guaranteed keys directly. Keep checks only for legitimate optional cases such as missing user arguments, nullable parser fields, ambiguous matches, or incomplete editor input.
 - Keep parser-shape traversal in detection classes. Put reusable argument helpers such as string and array string extraction, nested ranges, and position containment on `DetectedArgument` instead of duplicating parser traversal in feature providers.
 - Put pattern-building namespace helpers on `Pattern`, such as `Pattern::contract()`, `Pattern::support()`, `Pattern::facade()`, and `Pattern::containerAttribute()`. Do not reintroduce `contract`, `support`, `facade`, or attribute namespace helpers on individual providers.
-- Keep workspace-relative URI and link construction on `Workspace` through helpers such as `target()` and `link()`. Providers should not duplicate `joinPath()` and `#L` handling when the workspace helper fits.
+- Keep project-relative URI and link construction on `Project` through helpers such as `target()` and `link()`. Providers should not duplicate path joining and `#L` handling when the project helper fits.
 - Mapper providers should convert detected arguments into links, hovers, and diagnostics with minimal branching. Use `map()` plus `filter()` for one-response-or-null conversions, and use `flatMap()` only when one input can intentionally produce many responses.
 - Hover matching should use `DetectedArgument::containsPosition()` when a provider may accept array arguments, because array parser nodes may not have top-level ranges while their nested string values do.
 - Preserve behavior decisions separately from shape checks. Examples of behavior checks that should remain are skipping empty values, not linking ambiguous policy matches, ignoring wildcard route names, and requiring model matches only for calls where a model argument exists.
@@ -53,8 +53,8 @@ When working on the LSP server, do not write test plans or tests unless explicit
 
 ## LSP PHP Templates
 
-- LSP data templates live in `app/Lsp/Data/Templates/` and are executed in the user's Laravel app through `PhpRunner`.
-- `PhpRunner` prepends `app/Lsp/Data/Templates/global.php` before executing templates through Laravel Tinker.
+- LSP data templates live in `app/Lsp/Data/Templates/` and are executed in the user's Laravel app through `ScriptRunner`.
+- `ScriptRunner` prepends `app/Lsp/Data/Templates/global.php` before executing templates through Laravel Tinker.
 - Put shared template helpers in `global.php`; templates should use `LspHelper` methods instead of duplicating helper closures.
 - Keep LSP data templates self-contained and use `LspHelper` methods instead of duplicating helper closures.
 
