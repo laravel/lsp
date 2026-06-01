@@ -56,7 +56,7 @@ final class Initialize implements Method
 
         return (new PhpCommandDetector(
             FileUri::of($request->get('rootUri'))->path(),
-            $request->string('initializationOptions.phpEnvironment', 'auto'),
+            (string) $request->string('initializationOptions.phpEnvironment', 'auto'),
             $this->container[ExceptionHandler::class],
         ))->detect();
     }
