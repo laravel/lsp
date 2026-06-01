@@ -1,7 +1,6 @@
 <?php
 
 use App\Commands\CompileBinaryCommand;
-use App\Commands\ContextTypeScriptGeneratorCommand;
 use App\Commands\LspCommand;
 use App\Commands\Tag;
 use Illuminate\Console\Scheduling\ScheduleFinishCommand;
@@ -77,7 +76,6 @@ return [
         VendorPublishCommand::class,
         StubPublishCommand::class,
         CompileBinaryCommand::class,
-        ContextTypeScriptGeneratorCommand::class,
         Tag::class,
     ],
 
