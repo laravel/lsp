@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Lsp\Exceptions;
 
 use App\Lsp\Contracts\ExceptionHandler;
@@ -24,7 +26,7 @@ class Handler implements ExceptionHandler
      */
     public function report(Throwable $e): void
     {
-        $this->logger->error($e->getMessage(), compact('exception'));
+        $this->logger->error($e->getMessage(), ['exception' => $e]);
     }
 
     /**
