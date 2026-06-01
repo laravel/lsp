@@ -203,7 +203,7 @@ final class Server
     {
         foreach ($this->listeners($request->method()) as $listener) {
             try {
-                $this->container->make($listener)->handle($request);
+                $listener->handle($request);
             } catch (Throwable $e) {
                 $this->container[ExceptionHandler::class]->report($e);
             }
