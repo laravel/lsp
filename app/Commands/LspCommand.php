@@ -3,7 +3,6 @@
 namespace App\Commands;
 
 use App\Lsp\Server;
-use App\Lsp\Transport\StdioTransport;
 use LaravelZero\Framework\Commands\Command;
 
 class LspCommand extends Command
@@ -23,6 +22,6 @@ class LspCommand extends Command
      */
     public function handle(): void
     {
-        (new Server(new StdioTransport))->start();
+        Server::stdio()->start();
     }
 }

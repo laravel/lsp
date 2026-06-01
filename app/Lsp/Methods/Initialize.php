@@ -14,16 +14,17 @@ use App\Lsp\Support\FileUri;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
 use Illuminate\Container\Container;
+use Psr\Log\LoggerInterface;
 
 final class Initialize implements Method
 {
     /**
      * Instantiate a new class instance.
      */
-    public function __construct(protected Container $container)
-    {
-        //
-    }
+    public function __construct(
+        protected Container $container,
+        protected LoggerInterface $logger,
+    ) {}
 
     /**
      * Handle the incoming LSP request.
@@ -40,6 +41,15 @@ final class Initialize implements Method
         );
 
         $this->container->instance(Project::class, $project);
+
+        $this->logger->info('Initialized Laravel LSP.', [
+            'rootUri'               => (string) $project->uri,
+            'processId'             => $request->get('processId'),
+            'clientInfo'            => $request->array('clientInfo'),
+            'initializationOptions' => $project->all(),
+            'phpEnvironment'        => $project->phpEnvironment(),
+            'phpCommand'            => $project->scripts->command(),
+        ]);
 
         return JsonRpcResponse::result($request->id(), [
             'capabilities' => [
