@@ -24,9 +24,11 @@ jobs:
         uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
         with:
           php-version: "8.2"
+          tools: composer:v2
           extensions: bcmath,calendar,ctype,curl,dba,dom,exif,fileinfo,filter,iconv,mbstring,openssl,pcntl,pdo_mysql,pdo_sqlite,pdo,phar,posix,readline,session,simplexml,sockets,sodium,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib
 
       - name: Install dependencies
+        shell: pwsh
         run: |
           composer install --prefer-dist --no-progress --no-dev --quiet
 
@@ -35,7 +37,16 @@ jobs:
           curl -L -O https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe
           .\spc-windows-x64.exe --version
 
+      - name: Verify Composer
+        shell: pwsh
+        run: |
+          composer --version
+          where.exe composer
+
       - name: Build Binary
+        shell: pwsh
+        env:
+          COMPOSER_BINARY: composer
         run: |
           php server app:build --build-version=${{ github.ref_name }} -vvv
 
