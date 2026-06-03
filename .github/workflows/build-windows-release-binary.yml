@@ -46,7 +46,7 @@ jobs:
       - name: Build Binary
         shell: pwsh
         env:
-          COMPOSER_BINARY: php composer.phar
+          COMPOSER_BINARY: composer.phar
         run: |
           php server app:build --build-version=${{ github.ref_name }} -vvv
 
