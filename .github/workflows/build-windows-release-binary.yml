@@ -37,16 +37,8 @@ jobs:
           curl -L -O https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe
           .\spc-windows-x64.exe --version
 
-      - name: Install Composer PHAR
-        shell: pwsh
-        run: |
-          Invoke-WebRequest https://getcomposer.org/composer-stable.phar -OutFile composer.phar
-          php composer.phar --version
-
       - name: Build Binary
         shell: pwsh
-        env:
-          COMPOSER_BINARY: composer.phar
         run: |
           php server app:build --build-version=${{ github.ref_name }} -vvv
 
