@@ -66,7 +66,7 @@ final class Initialize implements Method
                 'codeActionProvider' => [
                     'codeActionKinds' => ['quickfix'],
                 ],
-                'definitionProvider' => $project->boolean('definitionProvider', false),
+                'definitionProvider' => $project->boolean('definitionProvider', true),
                 'hoverProvider'      => true,
             ],
             'serverInfo' => [
