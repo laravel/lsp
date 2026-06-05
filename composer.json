@@ -10,7 +10,6 @@
     "homepage": "https://github.com/laravel/lsp",
     "type": "project",
     "license": "MIT",
-    "version": "0.0.19",
     "support": {
         "issues": "https://github.com/laravel/lsp/issues",
         "source": "https://github.com/laravel/lsp"

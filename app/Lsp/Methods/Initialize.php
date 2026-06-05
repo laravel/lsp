@@ -71,7 +71,7 @@ final class Initialize implements Method
             ],
             'serverInfo' => [
                 'name'    => 'Laravel LSP',
-                'version' => $this->version(),
+                'version' => (string) config('app.version'),
             ],
             'laravel' => [
                 'phpEnvironment' => $project->phpEnvironment(),
@@ -96,15 +96,5 @@ final class Initialize implements Method
             (string) $request->string('initializationOptions.phpEnvironment', 'auto'),
             $this->container[ExceptionHandler::class],
         ))->detect();
-    }
-
-    /**
-     * Resolve the server version.
-     */
-    protected function version(): string
-    {
-        $composer = json_decode(file_get_contents(__DIR__ . '/../../../composer.json') ?: '{}', true);
-
-        return is_array($composer) ? (string) ($composer['version'] ?? '') : '';
     }
 }

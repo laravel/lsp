@@ -1,8 +1,6 @@
 <?php
 
-use App\Commands\CompileBinaryCommand;
 use App\Commands\LspCommand;
-use App\Commands\Tag;
 use Illuminate\Console\Scheduling\ScheduleFinishCommand;
 use Illuminate\Console\Scheduling\ScheduleListCommand;
 use Illuminate\Console\Scheduling\ScheduleRunCommand;
@@ -75,8 +73,6 @@ return [
         ScheduleFinishCommand::class,
         VendorPublishCommand::class,
         StubPublishCommand::class,
-        CompileBinaryCommand::class,
-        Tag::class,
     ],
 
     /*
