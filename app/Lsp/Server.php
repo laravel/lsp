@@ -113,7 +113,9 @@ final class Server
         } catch (Throwable $e) {
             $this->container[ExceptionHandler::class]->report($e);
 
-            $this->respond(JsonRpcResponse::error(null, -32700, $e->getMessage()));
+            $this->respond(JsonRpcResponse::error(null, -32700, $e->getMessage(), [
+                'message' => $message,
+            ]));
 
             return;
         }

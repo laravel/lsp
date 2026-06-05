@@ -59,7 +59,7 @@ class JsonRpcResponse
         }
 
         return new static([
-            ...$id === null ? [] : ['id' => $id],
+            'id'    => $id,
             'error' => $error,
         ]);
     }
