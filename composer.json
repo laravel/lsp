@@ -21,16 +21,16 @@
         }
     ],
     "require": {
-        "php": "^8.2.0",
-        "illuminate/log": "^11.5",
-        "laravel-zero/framework": "^11.0.0",
-        "microsoft/tolerant-php-parser": "^0.1.2",
-        "stillat/blade-parser": "^1.10"
+        "php": "^8.2.0"
     },
     "require-dev": {
+        "illuminate/log": "^11.5",
+        "laravel-zero/framework": "^11.0.0",
         "laravel/pint": "^1.15.2",
+        "microsoft/tolerant-php-parser": "^0.1.2",
         "mockery/mockery": "^1.6.11",
-        "pestphp/pest": "^2.34.7"
+        "pestphp/pest": "^2.34.7",
+        "stillat/blade-parser": "^1.10"
     },
     "autoload": {
         "psr-4": {
@@ -56,7 +56,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "bin": [
-        "server"
+        "builds/laravel-lsp"
     ],
     "scripts": {
         "pre-autoload-dump": [

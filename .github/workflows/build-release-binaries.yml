@@ -40,10 +40,6 @@ jobs:
           php-version: "8.2"
           extensions: bcmath,calendar,ctype,curl,dba,dom,exif,fileinfo,filter,iconv,mbstring,openssl,pcntl,pdo_mysql,pdo_sqlite,pdo,phar,posix,readline,session,simplexml,sockets,sodium,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib
 
-      - name: Install dependencies
-        run: |
-          composer install --prefer-dist --no-progress --no-dev --quiet
-
       - name: Install SPC
         run: |
           curl -O -L "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-${{ matrix.spc_suffix }}"
@@ -51,11 +47,13 @@ jobs:
           chmod +x ./spc
           ./spc --version
 
-      - name: Build Binary
+      - name: Smoke Test Committed PHAR
         run: |
-          echo "" > .env
-          php server app:build --build-version=${{ github.ref_name }}
-          chmod +x ./builds/server && ./builds/server --version
+          chmod +x ./builds/laravel-lsp
+          VERSION=$(./builds/laravel-lsp --version)
+          echo "$VERSION"
+          [[ "$VERSION" == *"${{ github.ref_name }}"* ]]
+          ./builds/laravel-lsp list
 
       - name: Download PHP
         run: |
@@ -66,7 +64,7 @@ jobs:
 
       - name: SPC Combine
         run: |
-          ./spc micro:combine builds/server -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
+          ./spc micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -91,18 +89,17 @@ jobs:
           php-version: "8.2"
           extensions: bcmath,calendar,ctype,curl,dba,dom,exif,fileinfo,filter,iconv,mbstring,openssl,pcntl,pdo_mysql,pdo_sqlite,pdo,phar,posix,readline,session,simplexml,sockets,sodium,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib
 
-      - name: Install dependencies
-        run: |
-          composer install --prefer-dist --no-progress --no-dev --quiet
-
       - name: Install SPC
         run: |
           curl -L -O https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe
           .\spc-windows-x64.exe --version
 
-      - name: Build Binary
+      - name: Smoke Test Committed PHAR
         run: |
-          php server app:build --build-version=${{ github.ref_name }}
+          $version = php .\builds\laravel-lsp --version
+          $version
+          if (-not $version.Contains("${{ github.ref_name }}")) { exit 1 }
+          php .\builds\laravel-lsp list
 
       - name: Download PHP
         run: |
@@ -113,7 +110,7 @@ jobs:
 
       - name: SPC Combine
         run: |
-          .\spc-windows-x64.exe micro:combine builds/server -O bin/server-${{ github.ref_name }}-x64-win32
+          .\spc-windows-x64.exe micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-x64-win32
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -127,6 +124,11 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
       - name: Download all build artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -135,6 +137,7 @@ jobs:
       - name: Flatten artifacts into release directory
         run: |
           mkdir -p release
+          cp builds/laravel-lsp release/laravel-lsp
           find dist -type f -name 'server-*' -exec cp {} release/ \;
 
       - name: Create release and upload binaries

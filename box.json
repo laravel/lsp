@@ -14,5 +14,6 @@
     "compactors": [
         "KevinGH\\Box\\Compactor\\Php",
         "KevinGH\\Box\\Compactor\\Json"
-    ]
+    ],
+    "exclude-dev-files": false
 }
