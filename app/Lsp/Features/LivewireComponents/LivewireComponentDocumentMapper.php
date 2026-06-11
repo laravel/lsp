@@ -127,17 +127,19 @@ class LivewireComponentDocumentMapper
         $matches = [];
 
         foreach (explode("\n", $document->content) as $lineNumber => $line) {
-            if (preg_match('/<\/?livewire:([^\s>]+)/', $line, $match, PREG_OFFSET_CAPTURE) !== 1) {
+            if (preg_match_all('/<\/?livewire:([^\s>]+)/', $line, $lineMatches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER) === false) {
                 continue;
             }
 
-            $matches[] = [
-                'name'  => $match[1][0],
-                'range' => [
-                    'start' => ['line' => $lineNumber, 'character' => $match[0][1] + 1],
-                    'end'   => ['line' => $lineNumber, 'character' => $match[0][1] + strlen($match[0][0])],
-                ],
-            ];
+            foreach ($lineMatches as $match) {
+                $matches[] = [
+                    'name'  => $match[1][0],
+                    'range' => [
+                        'start' => ['line' => $lineNumber, 'character' => $match[0][1] + 1],
+                        'end'   => ['line' => $lineNumber, 'character' => $match[0][1] + strlen($match[0][0])],
+                    ],
+                ];
+            }
         }
 
         return $matches;
