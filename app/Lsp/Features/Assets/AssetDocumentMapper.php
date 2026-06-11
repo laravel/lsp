@@ -54,17 +54,6 @@ class AssetDocumentMapper extends DocumentMapper
     }
 
     /**
-     * Convert the given argument to hover.
-     *
-     * @param  array<string, mixed>  $position
-     * @return array<string, mixed>|null
-     */
-    protected function toHover(DetectedArgument $argument, array $position): ?array
-    {
-        return null;
-    }
-
-    /**
      * Convert the given argument to diagnostics.
      *
      * @return array<int, array<string, mixed>>

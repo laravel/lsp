@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Lsp\Features\Paths;
 
-use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
@@ -58,37 +57,6 @@ class PathDocumentMapper extends DocumentMapper
                 'target' => (string) FileUri::fromPath($path),
             ]]
             : [];
-    }
-
-    /**
-     * Convert the given argument to hover.
-     *
-     * @param  array<string, mixed>  $position
-     * @return array<string, mixed>|null
-     */
-    protected function toHover(DetectedArgument $argument, array $position): ?array
-    {
-        return null;
-    }
-
-    /**
-     * Convert the given argument to diagnostics.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    protected function toDiagnostics(DetectedArgument $argument): array
-    {
-        return [];
-    }
-
-    /**
-     * Convert the given argument to completion items.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    protected function toCompletions(AutocompleteArgument $argument): array
-    {
-        return [];
     }
 
     /**

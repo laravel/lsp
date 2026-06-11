@@ -34,21 +34,30 @@ abstract class DocumentMapper
      * @param  array<string, mixed>  $position
      * @return array<string, mixed>|null
      */
-    abstract protected function toHover(DetectedArgument $argument, array $position): ?array;
+    protected function toHover(DetectedArgument $argument, array $position): ?array
+    {
+        return null;
+    }
 
     /**
      * Convert the given argument to diagnostics.
      *
      * @return array<int, array<string, mixed>>
      */
-    abstract protected function toDiagnostics(DetectedArgument $argument): array;
+    protected function toDiagnostics(DetectedArgument $argument): array
+    {
+        return [];
+    }
 
     /**
      * Convert the given argument to completion items.
      *
      * @return array<int, array<string, mixed>>
      */
-    abstract protected function toCompletions(AutocompleteArgument $argument): array;
+    protected function toCompletions(AutocompleteArgument $argument): array
+    {
+        return [];
+    }
 
     /**
      * Get matched arguments from the document.
