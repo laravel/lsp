@@ -39,14 +39,10 @@ class StdioTransport implements Transport
      */
     public function run(): void
     {
-        stream_set_blocking(STDIN, false);
-
         while (!feof(STDIN)) {
             $headers = $this->readHeaders();
 
             if ($headers === null) {
-                usleep(10000);
-
                 continue;
             }
 
@@ -79,7 +75,7 @@ class StdioTransport implements Transport
             $line = fgets(STDIN);
 
             if ($line === false) {
-                return $headers === '' ? null : $headers;
+                return null;
             }
 
             $headers .= $line;
@@ -107,12 +103,18 @@ class StdioTransport implements Transport
      */
     protected function readBody(int $length): ?string
     {
-        stream_set_blocking(STDIN, true);
+        $body = '';
 
-        $body = fread(STDIN, $length);
+        while (strlen($body) < $length) {
+            $chunk = fread(STDIN, $length - strlen($body));
 
-        stream_set_blocking(STDIN, false);
+            if ($chunk === false || $chunk === '') {
+                return null;
+            }
 
-        return $body !== false ? $body : null;
+            $body .= $chunk;
+        }
+
+        return $body;
     }
 }
