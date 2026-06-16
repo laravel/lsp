@@ -26,6 +26,10 @@ class Handler implements ExceptionHandler
      */
     public function report(Throwable $e): void
     {
+        if ($e instanceof RequestCancelledException) {
+            return;
+        }
+
         $this->logger->error($e->getMessage(), ['exception' => $e]);
     }
 

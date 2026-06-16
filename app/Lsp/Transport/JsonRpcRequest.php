@@ -4,12 +4,21 @@ declare(strict_types=1);
 
 namespace App\Lsp\Transport;
 
+use Amp\Cancellation;
+use App\Lsp\Exceptions\RequestCancelledException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\InteractsWithData;
+
+use function Amp\delay;
 
 class JsonRpcRequest
 {
     use InteractsWithData;
+
+    /**
+     * The cancellation source for the request.
+     */
+    protected ?Cancellation $cancellation = null;
 
     /**
      * Create a new JSON-RPC request instance.
@@ -74,6 +83,33 @@ class JsonRpcRequest
     public function isNotification(): bool
     {
         return $this->notification;
+    }
+
+    /**
+     * Set the cancellation source for the request.
+     */
+    public function setCancellation(Cancellation $cancellation): void
+    {
+        $this->cancellation = $cancellation;
+    }
+
+    /**
+     * Throw if the request has been cancelled.
+     *
+     * @throws RequestCancelledException
+     */
+    public function cancelIfRequested(): void
+    {
+        if ($this->cancellation === null) {
+            return;
+        }
+
+        // Yield to the event loop so a pending $/cancelRequest can be read.
+        delay(0);
+
+        if ($this->cancellation->isRequested()) {
+            throw new RequestCancelledException;
+        }
     }
 
     /**

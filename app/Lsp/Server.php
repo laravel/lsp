@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
+use Amp\DeferredCancellation;
 use App\Lsp\Contracts\ExceptionHandler;
 use App\Lsp\Contracts\Listener;
 use App\Lsp\Contracts\Method;
@@ -12,6 +13,7 @@ use App\Lsp\Exceptions\Handler;
 use App\Lsp\Exceptions\MethodNotFoundException;
 use App\Lsp\Exceptions\ParseException;
 use App\Lsp\Exceptions\ServerNotInitializedException;
+use App\Lsp\Listeners\CancelRequest;
 use App\Lsp\Listeners\ClearDocumentDiagnostics;
 use App\Lsp\Listeners\CloseDocument;
 use App\Lsp\Listeners\NotifyFileWatchers;
@@ -27,15 +29,17 @@ use App\Lsp\Methods\TextDocumentCompletion;
 use App\Lsp\Methods\TextDocumentDefinition;
 use App\Lsp\Methods\TextDocumentDocumentLink;
 use App\Lsp\Methods\TextDocumentHover;
+use App\Lsp\Transport\AmpStdioTransport;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
-use App\Lsp\Transport\StdioTransport;
 use Illuminate\Container\Container;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
+
+use function Amp\async;
 
 final class Server
 {
@@ -45,13 +49,13 @@ final class Server
      * @var array<string, class-string<Method>>
      */
     protected array $handlers = [
-        'initialize' => Initialize::class,
-        'laravel/data' => LaravelData::class,
-        'textDocument/codeAction' => TextDocumentCodeAction::class,
-        'textDocument/completion' => TextDocumentCompletion::class,
-        'textDocument/definition' => TextDocumentDefinition::class,
+        'initialize'                => Initialize::class,
+        'laravel/data'              => LaravelData::class,
+        'textDocument/codeAction'   => TextDocumentCodeAction::class,
+        'textDocument/completion'   => TextDocumentCompletion::class,
+        'textDocument/definition'   => TextDocumentDefinition::class,
         'textDocument/documentLink' => TextDocumentDocumentLink::class,
-        'textDocument/hover' => TextDocumentHover::class,
+        'textDocument/hover'        => TextDocumentHover::class,
     ];
 
     /**
@@ -60,10 +64,11 @@ final class Server
      * @var array<string, array<int, class-string<Listener>>>
      */
     protected array $listeners = [
-        'initialized' => [RegisterFileWatchers::class],
-        'textDocument/didOpen' => [OpenDocument::class, PublishDiagnostics::class],
-        'textDocument/didChange' => [UpdateDocument::class, PublishDiagnostics::class],
-        'textDocument/didClose' => [CloseDocument::class, ClearDocumentDiagnostics::class],
+        '$/cancelRequest'                 => [CancelRequest::class],
+        'initialized'                     => [RegisterFileWatchers::class],
+        'textDocument/didOpen'            => [OpenDocument::class, PublishDiagnostics::class],
+        'textDocument/didChange'          => [UpdateDocument::class, PublishDiagnostics::class],
+        'textDocument/didClose'           => [CloseDocument::class, ClearDocumentDiagnostics::class],
         'workspace/didChangeWatchedFiles' => [NotifyFileWatchers::class, PublishOpenDocumentDiagnostics::class],
     ];
 
@@ -71,6 +76,13 @@ final class Server
      * Store the last sent request id.
      */
     protected int $lastRequestId = 0;
+
+    /**
+     * The cancellation sources of in-flight asynchronous requests.
+     *
+     * @var array<int|string, DeferredCancellation>
+     */
+    protected array $cancellations = [];
 
     /**
      * Instantiate a new class instance.
@@ -88,8 +100,8 @@ final class Server
      */
     public static function stdio(): static
     {
-        return new static(
-            new StdioTransport,
+        return new self(
+            new AmpStdioTransport,
             new Logger('Laravel LSP', [new StreamHandler('php://stderr')]),
         );
     }
@@ -124,11 +136,7 @@ final class Server
             return;
         }
 
-        $response = $this->dispatch($request);
-
-        if (! is_null($response)) {
-            $this->respond($response);
-        }
+        $this->dispatch($request);
     }
 
     /**
@@ -146,11 +154,11 @@ final class Server
     {
         $data = [
             'jsonrpc' => '2.0',
-            'id' => $this->lastRequestId++,
-            'method' => $method,
+            'id'      => $this->lastRequestId++,
+            'method'  => $method,
         ];
 
-        if (! is_null($params)) {
+        if (!is_null($params)) {
             $data['params'] = $params;
         }
 
@@ -164,10 +172,10 @@ final class Server
     {
         $data = [
             'jsonrpc' => '2.0',
-            'method' => $method,
+            'method'  => $method,
         ];
 
-        if (! is_null($params)) {
+        if (!is_null($params)) {
             $data['params'] = $params;
         }
 
@@ -199,7 +207,7 @@ final class Server
      */
     protected function isResponse(array $payload): bool
     {
-        return ! isset($payload['method'])
+        return !isset($payload['method'])
             && array_key_exists('id', $payload)
             && (array_key_exists('result', $payload) || array_key_exists('error', $payload));
     }
@@ -207,42 +215,65 @@ final class Server
     /**
      * Dispatch the request.
      */
-    public function dispatch(JsonRpcRequest $request): ?JsonRpcResponse
+    public function dispatch(JsonRpcRequest $request): void
     {
         if ($request->isNotification()) {
             $this->dispatchNotification($request);
 
-            return null;
+            return;
         }
 
-        return $this->dispatchRequest($request);
+        $this->dispatchRequest($request);
     }
 
     /**
-     * Handle the notification.
+     * Handle the notification asynchronously.
      */
     public function dispatchNotification(JsonRpcRequest $request): void
     {
-        foreach ($this->listeners($request->method()) as $listener) {
-            try {
-                $listener->handle($request);
-            } catch (Throwable $e) {
-                $this->container[ExceptionHandler::class]->report($e);
+        async(function () use ($request): void {
+            foreach ($this->listeners($request->method()) as $listener) {
+                try {
+                    $listener->handle($request);
+                } catch (Throwable $e) {
+                    $this->container[ExceptionHandler::class]->report($e);
+                }
             }
-        }
+        });
     }
 
     /**
-     * Handle request.
+     * Handle the request asynchronously, responding from its own fiber.
      */
-    public function dispatchRequest(JsonRpcRequest $request): JsonRpcResponse
+    public function dispatchRequest(JsonRpcRequest $request): void
     {
-        try {
-            return $this->handler($request->method())->handle($request);
-        } catch (Throwable $e) {
-            $this->container[ExceptionHandler::class]->report($e);
+        $deferred = new DeferredCancellation;
 
-            return $this->container[ExceptionHandler::class]->render($request, $e);
+        $this->cancellations[$request->id()] = $deferred;
+        $request->setCancellation($deferred->getCancellation());
+
+        async(function () use ($request): void {
+            try {
+                $response = $this->handler($request->method())->handle($request);
+            } catch (Throwable $e) {
+                $this->container[ExceptionHandler::class]->report($e);
+
+                $response = $this->container[ExceptionHandler::class]->render($request, $e);
+            } finally {
+                unset($this->cancellations[$request->id()]);
+            }
+
+            $this->respond($response);
+        });
+    }
+
+    /**
+     * Cancel the in-flight request with the given id.
+     */
+    public function cancel(int|string $id): void
+    {
+        if (isset($this->cancellations[$id])) {
+            $this->cancellations[$id]->cancel();
         }
     }
 

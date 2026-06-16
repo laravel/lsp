@@ -49,7 +49,7 @@ class TextDocumentDefinition implements Method
 
         $locationLinks = [];
 
-        foreach ($this->links($document) as $link) {
+        foreach ($this->links($request, $document) as $link) {
             $range = $link['range'] ?? null;
 
             if (!is_array($range) || !Position::inRange($range, $position)) {
@@ -67,12 +67,14 @@ class TextDocumentDefinition implements Method
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function links(Document $document): array
+    protected function links(JsonRpcRequest $request, Document $document): array
     {
         $links = [];
 
         foreach ($this->features->links() as $provider) {
             array_push($links, ...$provider->get($document));
+
+            $request->cancelIfRequested();
         }
 
         return $links;

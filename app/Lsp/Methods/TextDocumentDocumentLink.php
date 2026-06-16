@@ -39,6 +39,8 @@ class TextDocumentDocumentLink implements Method
 
         foreach ($this->features->links() as $provider) {
             array_push($links, ...$provider->get($document));
+
+            $request->cancelIfRequested();
         }
 
         return JsonRpcResponse::result($request->id(), $links);

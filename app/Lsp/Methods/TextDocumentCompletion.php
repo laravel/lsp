@@ -51,6 +51,8 @@ class TextDocumentCompletion implements Method
             if ($items !== []) {
                 return JsonRpcResponse::result($request->id(), $items);
             }
+
+            $request->cancelIfRequested();
         }
 
         return JsonRpcResponse::result($request->id(), []);

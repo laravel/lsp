@@ -48,6 +48,8 @@ class TextDocumentCodeAction implements Method
 
         foreach ($this->features->codeActions() as $provider) {
             array_push($actions, ...$provider->get($document, $codeActionContext));
+
+            $request->cancelIfRequested();
         }
 
         return JsonRpcResponse::result($request->id(), $actions);

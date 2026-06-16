@@ -23,6 +23,8 @@
         "php": "^8.2.0"
     },
     "require-dev": {
+        "amphp/amp": "^3.0",
+        "amphp/byte-stream": "^2.1",
         "laravel-zero/framework": "^12.0",
         "laravel/pint": "^1.15.2",
         "microsoft/tolerant-php-parser": "^0.1.2",

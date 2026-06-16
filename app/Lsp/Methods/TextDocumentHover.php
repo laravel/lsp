@@ -47,6 +47,8 @@ class TextDocumentHover implements Method
             if ($hover !== null) {
                 return JsonRpcResponse::result($request->id(), $hover);
             }
+
+            $request->cancelIfRequested();
         }
 
         return JsonRpcResponse::result($request->id(), null);
