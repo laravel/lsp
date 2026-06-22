@@ -93,7 +93,7 @@ class TranslationDocumentMapper extends DocumentMapper
     {
         $value = $argument->stringValue();
 
-        if ($value === null || is_array($this->find($value))) {
+        if ($value === null || !$this->isLikelyKeyLiteral($value) || is_array($this->find($value))) {
             return [];
         }
 
@@ -104,6 +104,17 @@ class TranslationDocumentMapper extends DocumentMapper
             'code'     => 'translation',
             'message'  => "Translation [{$value}] not found.",
         ]];
+    }
+
+    /**
+     * Determine if the given translation literal looks like a key.
+     */
+    protected function isLikelyKeyLiteral(string $value): bool
+    {
+        return preg_match(
+            '/^(?:[A-Za-z0-9_\\-\\/]+::)?[A-Za-z0-9_\\-\\/]+(?:\\.[A-Za-z0-9_\\-\\/]+)+$/',
+            $value,
+        ) === 1;
     }
 
     /**
