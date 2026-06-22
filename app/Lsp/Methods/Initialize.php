@@ -31,13 +31,25 @@ final class Initialize implements Method
      */
     public function handle(JsonRpcRequest $request): JsonRpcResponse
     {
+        $rootUri = $request->get('rootUri');
+
+        if (!is_string($rootUri) || $rootUri === '') {
+            return JsonRpcResponse::error($request->id(), -32602, 'Initialize request must include a workspace root URI.');
+        }
+
+        $uri = FileUri::of($rootUri);
+
+        if (!file_exists($uri->path('artisan'))) {
+            return JsonRpcResponse::error($request->id(), -32602, 'Initialize request root URI must be a Laravel project.');
+        }
+
         $this->container->singleton(Project::class);
 
         $project = new Project(
-            $uri = FileUri::of($request->get('rootUri')),
+            $uri,
             $request->array('initializationOptions'),
             new ProjectIndex($this->container),
-            new ScriptRunner($uri->path(), $this->phpCommand($request)),
+            new ScriptRunner($uri->path(), $this->phpCommand($request, $uri)),
         );
 
         $this->container->instance(Project::class, $project);
@@ -85,14 +97,14 @@ final class Initialize implements Method
      *
      * @return array<int, string>
      */
-    protected function phpCommand(JsonRpcRequest $request): array
+    protected function phpCommand(JsonRpcRequest $request, FileUri $uri): array
     {
         if ($command = $request->array('initializationOptions.phpCommand')) {
             return $command;
         }
 
         return (new PhpCommandDetector(
-            FileUri::of($request->get('rootUri'))->path(),
+            $uri->path(),
             (string) $request->string('initializationOptions.phpEnvironment', 'auto'),
             $this->container[ExceptionHandler::class],
         ))->detect();
