@@ -25,6 +25,24 @@ class StdioTransport implements Transport
     }
 
     /**
+     * Dispatch an incoming JSON-RPC request.
+     *
+     * @param  (Closure(JsonRpcRequest): void)  $dispatch
+     */
+    public function dispatch(JsonRpcRequest $request, Closure $dispatch): void
+    {
+        $dispatch($request);
+    }
+
+    /**
+     * Cancel the in-flight request with the given id.
+     */
+    public function cancel(int|string $id): void
+    {
+        //
+    }
+
+    /**
      * Send a message to the client with LSP Content-Length framing.
      */
     public function send(string $message): void

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
-use Amp\DeferredCancellation;
 use App\Lsp\Contracts\ExceptionHandler;
 use App\Lsp\Contracts\Listener;
 use App\Lsp\Contracts\Method;
@@ -39,8 +38,6 @@ use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
-
-use function Amp\async;
 
 final class Server
 {
@@ -79,20 +76,12 @@ final class Server
     protected int $lastRequestId = 0;
 
     /**
-     * The cancellation sources of in-flight asynchronous requests.
-     *
-     * @var array<int|string, DeferredCancellation>
-     */
-    protected array $cancellations = [];
-
-    /**
      * Instantiate a new class instance.
      */
     public function __construct(
         protected Transport $transport,
         protected LoggerInterface $logger = new NullLogger,
         protected Container $container = new Container,
-        protected bool $async = true,
     ) {
         $this->registerBaseBindings();
     }
@@ -105,7 +94,6 @@ final class Server
         return new self(
             new StdioTransport,
             new Logger('Laravel LSP', [new StreamHandler('php://stderr')]),
-            async: false,
         );
     }
 
@@ -117,7 +105,6 @@ final class Server
         return new self(
             new AmpStdioTransport,
             new Logger('Laravel LSP', [new StreamHandler('php://stderr')]),
-            async: true,
         );
     }
 
@@ -151,7 +138,7 @@ final class Server
             return;
         }
 
-        $this->dispatch($request);
+        $this->transport->dispatch($request, $this->dispatch(...));
     }
 
     /**
@@ -242,46 +229,19 @@ final class Server
     }
 
     /**
-     * Handle the notification asynchronously.
+     * Dispatch the notification.
      */
     public function dispatchNotification(JsonRpcRequest $request): void
     {
-        if (!$this->async) {
-            $this->handleNotification($request);
-
-            return;
-        }
-
-        async(function () use ($request): void {
-            $this->handleNotification($request);
-        });
+        $this->handleNotification($request);
     }
 
     /**
-     * Handle the request asynchronously, responding from its own fiber.
+     * Dispatch the request.
      */
     public function dispatchRequest(JsonRpcRequest $request): void
     {
-        if (!$this->async) {
-            $this->respond($this->handleRequest($request));
-
-            return;
-        }
-
-        $deferred = new DeferredCancellation;
-
-        $this->cancellations[$request->id()] = $deferred;
-        $request->setCancellation($deferred->getCancellation());
-
-        async(function () use ($request): void {
-            try {
-                $response = $this->handleRequest($request);
-            } finally {
-                unset($this->cancellations[$request->id()]);
-            }
-
-            $this->respond($response);
-        });
+        $this->respond($this->handleRequest($request));
     }
 
     /**
@@ -317,9 +277,7 @@ final class Server
      */
     public function cancel(int|string $id): void
     {
-        if (isset($this->cancellations[$id])) {
-            $this->cancellations[$id]->cancel();
-        }
+        $this->transport->cancel($id);
     }
 
     /**

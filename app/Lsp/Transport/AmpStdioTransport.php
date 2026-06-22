@@ -6,8 +6,11 @@ namespace App\Lsp\Transport;
 
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
+use Amp\DeferredCancellation;
 use App\Lsp\Contracts\Transport;
 use Closure;
+
+use function Amp\async;
 
 class AmpStdioTransport implements Transport
 {
@@ -34,6 +37,13 @@ class AmpStdioTransport implements Transport
     protected string $buffer = '';
 
     /**
+     * The cancellation sources of in-flight asynchronous requests.
+     *
+     * @var array<int|string, DeferredCancellation>
+     */
+    protected array $cancellations = [];
+
+    /**
      * Instantiate a new class instance.
      */
     public function __construct()
@@ -48,6 +58,43 @@ class AmpStdioTransport implements Transport
     public function onReceive(Closure $handler): void
     {
         $this->handler = $handler;
+    }
+
+    /**
+     * Dispatch an incoming JSON-RPC request.
+     *
+     * @param  (Closure(JsonRpcRequest): void)  $dispatch
+     */
+    public function dispatch(JsonRpcRequest $request, Closure $dispatch): void
+    {
+        if ($request->isNotification()) {
+            async(fn () => $dispatch($request));
+
+            return;
+        }
+
+        $deferred = new DeferredCancellation;
+
+        $this->cancellations[$request->id()] = $deferred;
+        $request->setCancellation($deferred->getCancellation());
+
+        async(function () use ($request, $dispatch): void {
+            try {
+                $dispatch($request);
+            } finally {
+                unset($this->cancellations[$request->id()]);
+            }
+        });
+    }
+
+    /**
+     * Cancel the in-flight request with the given id.
+     */
+    public function cancel(int|string $id): void
+    {
+        if (isset($this->cancellations[$id])) {
+            $this->cancellations[$id]->cancel();
+        }
     }
 
     /**
