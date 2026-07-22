@@ -41,7 +41,7 @@ class Walker
         }
 
         foreach ($this->sourceFile->getDescendantNodesAndTokens() as $child) {
-            if ($child instanceof SkippedToken && $child->getText($this->sourceFile->getFullText()) === "'") {
+            if ($child instanceof SkippedToken && str_starts_with($child->getText($this->sourceFile->getFullText()), "'")) {
                 return true;
             }
         }
