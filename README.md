@@ -1,6 +1,6 @@
 ## Introduction
 
-The Laravel language server provides framework-aware editor features for Laravel applications. It runs over stdio using the Language Server Protocol and powers completions, hovers, diagnostics, document links, definitions, and quick fixes for Laravel and Blade code.
+The Laravel language server provides framework-aware editor features for Laravel applications. It powers code completions, hover information, diagnostics, document links, go-to definition, and quick fixes for Laravel and Blade code.
 
 ## Installation
 
