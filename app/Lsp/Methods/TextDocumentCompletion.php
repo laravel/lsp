@@ -8,6 +8,7 @@ use App\Lsp\Contracts\Method;
 use App\Lsp\DocumentManager;
 use App\Lsp\FeatureRegistry;
 use App\Lsp\Project;
+use App\Lsp\Support\CompletionItems;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
 
@@ -49,7 +50,10 @@ class TextDocumentCompletion implements Method
             $items = $provider->get($document, $position);
 
             if ($items !== []) {
-                return JsonRpcResponse::result($request->id(), $items);
+                return JsonRpcResponse::result(
+                    $request->id(),
+                    CompletionItems::matching($document, $items),
+                );
             }
 
             $request->cancelIfRequested();
