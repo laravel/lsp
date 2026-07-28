@@ -36,9 +36,24 @@ class AppServiceProvider extends ServiceProvider
         }
 
         File::ensureDirectoryExists(
-            $dir = dirname(Phar::running(false)) . '/logs'
+            $dir = $this->getCompiledLoggingDirectory()
         );
 
         return $dir . '/lsp.log';
+    }
+
+    /**
+     * Get the logging directory when running as a compiled binary.
+     */
+    protected function getCompiledLoggingDirectory(): string
+    {
+        $dir = dirname(Phar::running(false)) . '/logs';
+        $dirIsWritable = is_dir($dir) ? is_writable($dir) : is_writable(dirname($dir));
+
+        if ($dirIsWritable) {
+            return $dir;
+        }
+
+        return sys_get_temp_dir() . '/laravel-lsp/logs';
     }
 }
