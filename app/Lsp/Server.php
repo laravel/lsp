@@ -9,12 +9,14 @@ use App\Lsp\Contracts\Listener;
 use App\Lsp\Contracts\Method;
 use App\Lsp\Contracts\Transport;
 use App\Lsp\Exceptions\Handler;
+use App\Lsp\Exceptions\InvalidRequestException;
 use App\Lsp\Exceptions\MethodNotFoundException;
 use App\Lsp\Exceptions\ParseException;
 use App\Lsp\Exceptions\ServerNotInitializedException;
 use App\Lsp\Listeners\CancelRequest;
 use App\Lsp\Listeners\ClearDocumentDiagnostics;
 use App\Lsp\Listeners\CloseDocument;
+use App\Lsp\Listeners\ExitServer;
 use App\Lsp\Listeners\NotifyFileWatchers;
 use App\Lsp\Listeners\OpenDocument;
 use App\Lsp\Listeners\PublishDiagnostics;
@@ -23,6 +25,7 @@ use App\Lsp\Listeners\RegisterFileWatchers;
 use App\Lsp\Listeners\UpdateDocument;
 use App\Lsp\Methods\Initialize;
 use App\Lsp\Methods\LaravelData;
+use App\Lsp\Methods\Shutdown;
 use App\Lsp\Methods\TextDocumentCodeAction;
 use App\Lsp\Methods\TextDocumentCompletion;
 use App\Lsp\Methods\TextDocumentDefinition;
@@ -49,6 +52,7 @@ final class Server
     protected array $handlers = [
         'initialize'                => Initialize::class,
         'laravel/data'              => LaravelData::class,
+        'shutdown'                  => Shutdown::class,
         'textDocument/codeAction'   => TextDocumentCodeAction::class,
         'textDocument/completion'   => TextDocumentCompletion::class,
         'textDocument/definition'   => TextDocumentDefinition::class,
@@ -63,6 +67,7 @@ final class Server
      */
     protected array $listeners = [
         '$/cancelRequest'                 => [CancelRequest::class],
+        'exit'                            => [ExitServer::class],
         'initialized'                     => [RegisterFileWatchers::class],
         'textDocument/didOpen'            => [OpenDocument::class, PublishDiagnostics::class],
         'textDocument/didChange'          => [UpdateDocument::class, PublishDiagnostics::class],
@@ -74,6 +79,11 @@ final class Server
      * Store the last sent request id.
      */
     protected int $lastRequestId = 0;
+
+    /**
+     * Indicates whether the server has received a shutdown request.
+     */
+    protected bool $shutdown = false;
 
     /**
      * Instantiate a new class instance.
@@ -264,6 +274,10 @@ final class Server
     protected function handleRequest(JsonRpcRequest $request): JsonRpcResponse
     {
         try {
+            if ($this->shutdown) {
+                throw new InvalidRequestException('Server has shut down.');
+            }
+
             return $this->handler($request->method())->handle($request);
         } catch (Throwable $e) {
             $this->container[ExceptionHandler::class]->report($e);
@@ -278,6 +292,22 @@ final class Server
     public function cancel(int|string $id): void
     {
         $this->transport->cancel($id);
+    }
+
+    /**
+     * Mark the server as shut down.
+     */
+    public function shutdown(): void
+    {
+        $this->shutdown = true;
+    }
+
+    /**
+     * Exit the server process.
+     */
+    public function exit(): never
+    {
+        exit($this->shutdown ? 0 : 1);
     }
 
     /**
