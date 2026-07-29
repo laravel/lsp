@@ -31,29 +31,24 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function getLoggingPath(): string
     {
-        if (!Phar::running()) {
-            return storage_path('logs/lsp.log');
+        $dir = Phar::running()
+            ? dirname(Phar::running(false)) . '/logs'
+            : storage_path('logs');
+
+        if (!$this->isWritableLoggingDirectory($dir)) {
+            $dir = sys_get_temp_dir() . '/laravel-lsp/logs';
         }
 
-        File::ensureDirectoryExists(
-            $dir = $this->getCompiledLoggingDirectory()
-        );
+        File::ensureDirectoryExists($dir);
 
         return $dir . '/lsp.log';
     }
 
     /**
-     * Get the logging directory when running as a compiled binary.
+     * Determine if logs can be written to the given directory.
      */
-    protected function getCompiledLoggingDirectory(): string
+    protected function isWritableLoggingDirectory(string $dir): bool
     {
-        $dir = dirname(Phar::running(false)) . '/logs';
-        $dirIsWritable = is_dir($dir) ? is_writable($dir) : is_writable(dirname($dir));
-
-        if ($dirIsWritable) {
-            return $dir;
-        }
-
-        return sys_get_temp_dir() . '/laravel-lsp/logs';
+        return is_dir($dir) ? is_writable($dir) : is_writable(dirname($dir));
     }
 }
