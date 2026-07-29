@@ -32,6 +32,15 @@ Install and configure the official [Laravel VS Code extension](https://github.co
 
 Install and configure the official [Laravel VS Code extension](https://github.com/laravel/vs-code-extension), which is compatible with Cursor.
 
+### Claude Code
+
+Install the official [Laravel LSP plugin](https://github.com/laravel/agent-skills) from the Laravel plugin marketplace:
+
+```
+/plugin marketplace add laravel/agent-skills
+/plugin install laravel-lsp@laravel
+```
+
 ### Neovim
 
 Neovim 0.11+ is required. Add a custom LSP configuration:
