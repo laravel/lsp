@@ -8,6 +8,13 @@ function vsCodeGetReflectionMethod(ReflectionClass $reflected): ReflectionMethod
     };
 }
 
+function vsCodeGetMethodLine(ReflectionClass $reflected, ReflectionMethod $method): ?int
+{
+    return $method->getFileName() === $reflected->getFileName()
+        ? $method->getStartLine()
+        : null;
+}
+
 echo collect(app("Illuminate\Contracts\Http\Kernel")->getMiddlewareGroups())
     ->merge(app("Illuminate\Contracts\Http\Kernel")->getRouteMiddleware())
     ->merge(app('router')->getMiddleware())
@@ -36,9 +43,7 @@ echo collect(app("Illuminate\Contracts\Http\Kernel")->getMiddlewareGroups())
                 return [
                     'class' => $m,
                     'path'  => LspHelper::relativePath($reflected->getFileName()),
-                    'line'  => $reflectedMethod->getFileName() === $reflected->getFileName()
-                        ? $reflectedMethod->getStartLine()
-                        : null,
+                    'line'  => vsCodeGetMethodLine($reflected, $reflectedMethod),
                 ];
             })->all();
 
@@ -51,7 +56,7 @@ echo collect(app("Illuminate\Contracts\Http\Kernel")->getMiddlewareGroups())
         $result = array_merge($result, [
             'class' => $middleware,
             'path'  => LspHelper::relativePath($reflected->getFileName()),
-            'line'  => $reflectedMethod->getStartLine(),
+            'line'  => vsCodeGetMethodLine($reflected, $reflectedMethod),
         ]);
 
         $parameters = collect($reflectedMethod->getParameters())
