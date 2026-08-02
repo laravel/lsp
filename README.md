@@ -46,6 +46,26 @@ vim.lsp.config("laravel_lsp", {
 vim.lsp.enable("laravel_lsp")
 ```
 
+#### LazyVim and other Neovim distributions
+
+When using a Neovim distribution built on `lazy.nvim`, such as [LazyVim](https://github.com/LazyVim/LazyVim), configure the server through the `neovim/nvim-lspconfig` plugin spec:
+
+```lua
+{
+    "neovim/nvim-lspconfig",
+    opts = {
+        servers = {
+            laravel_lsp = {
+                mason = false,
+                cmd = { "laravel-lsp" },
+                filetypes = { "php", "blade" },
+                root_markers = { "artisan", "composer.json", ".git" },
+            },
+        },
+    },
+}
+```
+
 ### OpenCode
 
 Enable LSP support in `opencode.json` and add Laravel LSP as a custom server:
