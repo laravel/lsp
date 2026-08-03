@@ -32,6 +32,7 @@ Install and configure the official [Laravel VS Code extension](https://github.co
 
 Install and configure the official [Laravel VS Code extension](https://github.com/laravel/vs-code-extension), which is compatible with Cursor.
 
+
 ### Neovim
 
 Neovim 0.11+ is required. Add a custom LSP configuration:
@@ -45,6 +46,14 @@ vim.lsp.config("laravel_lsp", {
 
 vim.lsp.enable("laravel_lsp")
 ```
+### Nova
+
+##### v.14 and above
+1. Install [Laravel Suite Extension](https://extensions.panic.com/extensions/emran-mr/emran-mr.laravel/).
+2. Follow the guidance in `README` and [Nova Language Server Configuration help](https://help.nova.app/settings/languages/) 
+
+##### Any other version
+- You could try [Laravel LSP extension](https://extensions.panic.com/extensions/kranial/kranial.laravel-lsp/)
 
 ### OpenCode
 
