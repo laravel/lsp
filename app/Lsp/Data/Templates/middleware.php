@@ -1,6 +1,6 @@
 <?php
 
-function vsCodeGetReflectionMethod(ReflectionClass $reflected): ReflectionMethod
+function getReflectionMethod(ReflectionClass $reflected): ReflectionMethod
 {
     return match (true) {
         $reflected->hasMethod('__invoke') => $reflected->getMethod('__invoke'),
@@ -8,7 +8,7 @@ function vsCodeGetReflectionMethod(ReflectionClass $reflected): ReflectionMethod
     };
 }
 
-function vsCodeGetMethodLine(ReflectionClass $reflected, ReflectionMethod $method): ?int
+function getMethodLine(ReflectionClass $reflected, ReflectionMethod $method): ?int
 {
     return $method->getFileName() === $reflected->getFileName()
         ? $method->getStartLine()
@@ -38,12 +38,12 @@ echo collect(app("Illuminate\Contracts\Http\Kernel")->getMiddlewareGroups())
                 }
 
                 $reflected = new ReflectionClass($m);
-                $reflectedMethod = vsCodeGetReflectionMethod($reflected);
+                $reflectedMethod = getReflectionMethod($reflected);
 
                 return [
                     'class' => $m,
                     'path'  => LspHelper::relativePath($reflected->getFileName()),
-                    'line'  => vsCodeGetMethodLine($reflected, $reflectedMethod),
+                    'line'  => getMethodLine($reflected, $reflectedMethod),
                 ];
             })->all();
 
@@ -51,12 +51,12 @@ echo collect(app("Illuminate\Contracts\Http\Kernel")->getMiddlewareGroups())
         }
 
         $reflected = new ReflectionClass($middleware);
-        $reflectedMethod = vsCodeGetReflectionMethod($reflected);
+        $reflectedMethod = getReflectionMethod($reflected);
 
         $result = array_merge($result, [
             'class' => $middleware,
             'path'  => LspHelper::relativePath($reflected->getFileName()),
-            'line'  => vsCodeGetMethodLine($reflected, $reflectedMethod),
+            'line'  => getMethodLine($reflected, $reflectedMethod),
         ]);
 
         $parameters = collect($reflectedMethod->getParameters())
