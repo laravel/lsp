@@ -7,9 +7,9 @@ namespace App\Lsp;
 class ScriptRunner
 {
     /**
-     * PHP warning error types to suppress while running project scripts.
+     * PHP error types to suppress while running project scripts.
      */
-    protected const WARNING_ERROR_TYPES = 'E_WARNING | E_CORE_WARNING | E_COMPILE_WARNING | E_USER_WARNING';
+    protected const SUPPRESSED_ERROR_TYPES = 'E_WARNING | E_CORE_WARNING | E_COMPILE_WARNING | E_USER_WARNING | E_DEPRECATED | E_USER_DEPRECATED';
 
     /**
      * Create a new PHP runner instance.
@@ -39,7 +39,7 @@ class ScriptRunner
         $command = [
             ...$this->command,
             '-d',
-            'error_reporting=E_ALL & ~(' . self::WARNING_ERROR_TYPES . ')',
+            'error_reporting=E_ALL & ~(' . self::SUPPRESSED_ERROR_TYPES . ')',
             'artisan',
             'tinker',
             '--execute',
@@ -83,7 +83,7 @@ class ScriptRunner
     protected function code(string $code): string
     {
         return implode(PHP_EOL, [
-            'error_reporting(error_reporting() & ~(' . self::WARNING_ERROR_TYPES . '));',
+            'error_reporting(error_reporting() & ~(' . self::SUPPRESSED_ERROR_TYPES . '));',
             $this->normalize(file_get_contents(__DIR__ . '/Data/Templates/global.php') ?: ''),
             $this->normalize($code),
         ]);
