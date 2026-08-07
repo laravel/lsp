@@ -40,11 +40,19 @@ Neovim 0.11+ is required. Add a custom LSP configuration:
 vim.lsp.config("laravel_lsp", {
     cmd = { "laravel-lsp" },
     filetypes = { "php", "blade" },
-    root_markers = { "artisan", "composer.json", ".git" },
+    root_dir = function(bufnr, on_dir)
+        local root = vim.fs.root(bufnr, "artisan")
+
+        if root then
+            on_dir(root)
+        end
+    end,
 })
 
 vim.lsp.enable("laravel_lsp")
 ```
+
+The `root_dir` callback only starts the server when an `artisan` file is found, so the server is not launched for PHP projects that are not Laravel applications.
 
 ### OpenCode
 
