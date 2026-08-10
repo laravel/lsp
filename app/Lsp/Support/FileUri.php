@@ -61,17 +61,28 @@ class FileUri implements JsonSerializable
     public function relativePath(string $path): string
     {
         $basePath = rtrim(self::normalizePath($this->path()), '/');
-        $normalized = self::normalizePath(realpath($path) ?: $path);
 
-        if ($normalized === $basePath) {
-            return '';
-        }
-
-        if ($basePath === '' || !str_starts_with($normalized, $basePath.'/')) {
+        if ($basePath === '') {
             return $path;
         }
 
-        return substr($normalized, strlen($basePath) + 1);
+        foreach ([$path, realpath($path) ?: null] as $candidate) {
+            if ($candidate === null) {
+                continue;
+            }
+
+            $normalized = self::normalizePath($candidate);
+
+            if ($normalized === $basePath) {
+                return '';
+            }
+
+            if (str_starts_with($normalized, $basePath.'/')) {
+                return substr($normalized, strlen($basePath) + 1);
+            }
+        }
+
+        return $path;
     }
 
     /**
