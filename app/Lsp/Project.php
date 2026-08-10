@@ -20,6 +20,7 @@ final class Project
         public readonly array $init,
         public readonly ProjectIndex $index,
         public readonly ScriptRunner $scripts,
+        public readonly PintRunner $pint,
     ) {}
 
     /**
@@ -28,6 +29,14 @@ final class Project
     public function phpEnvironment(): string
     {
         return (string) $this->data('phpEnvironment', 'auto');
+    }
+
+    /**
+     * Determine if documents should be formatted with the project's Pint.
+     */
+    public function formatsDocuments(): bool
+    {
+        return $this->boolean('documentFormattingProvider', $this->pint->available());
     }
 
     /**

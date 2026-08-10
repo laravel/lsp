@@ -30,6 +30,7 @@ use App\Lsp\Methods\TextDocumentCodeAction;
 use App\Lsp\Methods\TextDocumentCompletion;
 use App\Lsp\Methods\TextDocumentDefinition;
 use App\Lsp\Methods\TextDocumentDocumentLink;
+use App\Lsp\Methods\TextDocumentFormatting;
 use App\Lsp\Methods\TextDocumentHover;
 use App\Lsp\Transport\AmpStdioTransport;
 use App\Lsp\Transport\JsonRpcRequest;
@@ -57,6 +58,7 @@ final class Server
         'textDocument/completion'   => TextDocumentCompletion::class,
         'textDocument/definition'   => TextDocumentDefinition::class,
         'textDocument/documentLink' => TextDocumentDocumentLink::class,
+        'textDocument/formatting'   => TextDocumentFormatting::class,
         'textDocument/hover'        => TextDocumentHover::class,
     ];
 

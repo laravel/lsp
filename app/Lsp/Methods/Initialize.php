@@ -7,6 +7,7 @@ namespace App\Lsp\Methods;
 use App\Lsp\Contracts\ExceptionHandler;
 use App\Lsp\Contracts\Method;
 use App\Lsp\PhpCommandDetector;
+use App\Lsp\PintRunner;
 use App\Lsp\Project;
 use App\Lsp\ProjectIndex;
 use App\Lsp\ScriptRunner;
@@ -45,11 +46,14 @@ final class Initialize implements Method
 
         $this->container->singleton(Project::class);
 
+        $phpCommand = $this->phpCommand($request, $uri);
+
         $project = new Project(
             $uri,
             $request->array('initializationOptions'),
             new ProjectIndex($this->container),
-            new ScriptRunner($uri->path(), $this->phpCommand($request, $uri)),
+            new ScriptRunner($uri->path(), $phpCommand),
+            new PintRunner($uri->path(), $phpCommand),
         );
 
         $this->container->instance(Project::class, $project);
@@ -78,8 +82,9 @@ final class Initialize implements Method
                 'codeActionProvider' => [
                     'codeActionKinds' => ['quickfix'],
                 ],
-                'definitionProvider' => $project->boolean('definitionProvider', true),
-                'hoverProvider'      => true,
+                'definitionProvider'         => $project->boolean('definitionProvider', true),
+                'documentFormattingProvider' => $project->formatsDocuments(),
+                'hoverProvider'              => true,
             ],
             'serverInfo' => [
                 'name'    => 'Laravel LSP',
