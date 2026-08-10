@@ -27,11 +27,6 @@ class PintRunner
     protected const STDIN_PREFIX = 'pint_stdin_';
 
     /**
-     * Whether Pint keeps the document name when reading stdin.
-     */
-    protected ?bool $keepsDocumentName = null;
-
-    /**
      * Create a new Pint runner instance.
      *
      * @param  array<int, string>  $command
@@ -61,8 +56,9 @@ class PintRunner
      * Get the command used to format the document at the given path.
      *
      * Pint reads the document from stdin, so unsaved editor changes are
-     * formatted without ever touching the file on disk. The filename is
-     * still passed along so Pint can resolve configuration and exclusions.
+     * formatted without ever touching the file on disk. The name is passed
+     * along so Pint can resolve configuration, exclusions, and the fixers
+     * that derive their behavior from it.
      *
      * @return array<int, string>
      */
@@ -76,77 +72,6 @@ class PintRunner
             ...(self::isBlade($path) ? ['--blade'] : []),
             '--stdin-filename',
             $path,
-        ];
-    }
-
-    /**
-     * Determine if Pint keeps the document name when reading stdin.
-     *
-     * Older versions buffer stdin into a file named after a uniqid, which
-     * templates cannot be formatted through at all. There is no way to tell
-     * from a template alone, since an unsupported run and an already
-     * formatted one both return the document unchanged, so ask Pint to
-     * rename a class it can only rename correctly when the name survives.
-     */
-    public function keepsDocumentName(): bool
-    {
-        return $this->keepsDocumentName ??= $this->probeDocumentName();
-    }
-
-    /**
-     * Probe Pint for whether it keeps the document name when reading stdin.
-     */
-    protected function probeDocumentName(): bool
-    {
-        $directory = $this->temporaryDirectory();
-
-        if ($directory === null) {
-            return false;
-        }
-
-        $config = $directory . DIRECTORY_SEPARATOR . 'pint.json';
-
-        try {
-            @file_put_contents($config, json_encode([
-                'preset' => 'laravel',
-                'rules'  => ['psr_autoloading' => true],
-            ]));
-
-            $output = $this->run([
-                ...$this->command,
-                $this->binary(),
-                '--quiet',
-                '--no-interaction',
-                '--config',
-                $config,
-                '--stdin-filename',
-                $directory . DIRECTORY_SEPARATOR . 'Probe.php',
-            ], "<?php\n\nnamespace App;\n\nclass Wrong {}\n");
-
-            return $output !== null && str_contains($output, 'class Probe');
-        } finally {
-            @unlink($config);
-            @rmdir($directory);
-        }
-    }
-
-    /**
-     * Get the command used to format the given file in place.
-     *
-     * Blade templates are only formatted when the rule is enabled, which
-     * requires Pint 1.30 or later and the prettier dependencies it installs.
-     *
-     * @return array<int, string>
-     */
-    public function fileCommand(string $file): array
-    {
-        return [
-            ...$this->command,
-            $this->binary(),
-            '--quiet',
-            '--no-interaction',
-            ...(self::isBlade($file) ? ['--blade'] : []),
-            $file,
         ];
     }
 
@@ -167,78 +92,33 @@ class PintRunner
             return null;
         }
 
-        // Templates are only formatted when Pint's Blade fixer sees a path
-        // ending in ".blade.php", so they need a real file name wherever
-        // Pint would otherwise read them through its own scratch file.
-        if (self::isBlade($path) && !$this->keepsDocumentName()) {
-            return $this->formatViaFile($path, $contents);
-        }
-
         $output = $this->run($this->command($path), $contents);
 
         if ($output === null || $output === '') {
             return null;
         }
 
-        // Pint 1.30 and earlier name their temporary stdin file after a uniqid,
-        // so filename derived fixers such as psr_autoloading rewrite the
-        // document to match it. Reformat through a file that keeps the real
-        // name so the class is never renamed to Pint's scratch file.
+        // Pint 1.30.4 and earlier named their stdin file after a uniqid, so
+        // psr_autoloading renames the document's class to match it. Decline
+        // to format rather than hand the editor a corrupted buffer.
         if (self::leaksTempFileName($contents, $output)) {
-            info('Pint discarded the document name, reformatting through a file.', [
+            info('Pint discarded the document name, skipping formatting.', [
                 'path' => $path,
             ]);
 
-            return $this->formatViaFile($path, $contents);
+            return null;
         }
 
         return $output;
     }
 
     /**
-     * Format the given contents through a temporary file named after the document.
-     *
-     * Reading stdin is preferred because it is the only mode in which Pint
-     * applies the configured exclusions, not because it is faster. The two
-     * are within a few milliseconds of each other, since starting Pint
-     * costs far more than writing the document out and reading it back.
+     * Determine if Pint rewrote the document to match its temporary stdin file.
      */
-    protected function formatViaFile(string $path, string $contents): ?string
+    public static function leaksTempFileName(string $contents, string $output): bool
     {
-        $directory = $this->temporaryDirectory();
-
-        if ($directory === null) {
-            return null;
-        }
-
-        $file = $directory . DIRECTORY_SEPARATOR . basename($path);
-
-        try {
-            if (@file_put_contents($file, $contents) === false) {
-                return null;
-            }
-
-            if ($this->run($this->fileCommand($file), '') === null) {
-                return null;
-            }
-
-            $formatted = @file_get_contents($file);
-
-            return $formatted === false || $formatted === '' ? null : $formatted;
-        } finally {
-            @unlink($file);
-            @rmdir($directory);
-        }
-    }
-
-    /**
-     * Create a private temporary directory, or null when it cannot be made.
-     */
-    protected function temporaryDirectory(): ?string
-    {
-        $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'laravel-lsp-' . bin2hex(random_bytes(8));
-
-        return @mkdir($directory, 0700, true) ? $directory : null;
+        return str_contains($output, self::STDIN_PREFIX)
+            && !str_contains($contents, self::STDIN_PREFIX);
     }
 
     /**
@@ -278,19 +158,6 @@ class PintRunner
         }
 
         return $output;
-    }
-
-    /**
-     * Determine if Pint rewrote the document to match its temporary stdin file.
-     *
-     * Pint buffers stdin into a temporary "pint_stdin_*.php" file, so fixers
-     * that derive code from the file name, such as psr_autoloading, rename
-     * classes to match it. Formatting must never corrupt the document.
-     */
-    public static function leaksTempFileName(string $contents, string $output): bool
-    {
-        return str_contains($output, self::STDIN_PREFIX)
-            && !str_contains($contents, self::STDIN_PREFIX);
     }
 
     /**

@@ -17,18 +17,11 @@ it('builds a stdin command for php documents', function () {
     ]);
 });
 
-it('enables the blade rule for templates however pint reads them', function () {
+it('enables the blade rule for templates', function () {
     $runner = new PintRunner('/app', ['php']);
 
-    expect($runner->fileCommand('/tmp/x/home.blade.php'))->toContain('--blade')
-        ->and($runner->fileCommand('/tmp/x/User.php'))->not->toContain('--blade')
-        ->and($runner->command('/app/resources/views/home.blade.php'))->toContain('--blade')
+    expect($runner->command('/app/resources/views/home.blade.php'))->toContain('--blade')
         ->and($runner->command('/app/routes/web.php'))->not->toContain('--blade');
-});
-
-it('detects that pint discards the document name when reading stdin', function () {
-    // The suite pins laravel/pint below the release that keeps the name.
-    expect((new PintRunner(base_path(), ['php']))->keepsDocumentName())->toBeFalse();
 });
 
 it('preserves the detected php command', function () {
@@ -78,7 +71,10 @@ it('detects a document rewritten to match pint\'s temporary stdin file', functio
     ))->toBeFalse();
 });
 
-it('formats through a real file name when psr_autoloading is enabled', function () {
+it('declines to format when pint discards the document name', function () {
+    // The suite pins laravel/pint below 1.30.5, which is the release that
+    // started naming the stdin file after the document. Formatting through
+    // an older Pint with psr_autoloading enabled would rename the class.
     $project = sys_get_temp_dir() . '/laravel-lsp-psr-' . bin2hex(random_bytes(6));
 
     mkdir($project, 0700, true);
@@ -93,10 +89,7 @@ it('formats through a real file name when psr_autoloading is enabled', function 
         "<?php\n\nnamespace App\\Models;\n\nclass  User{\npublic function bar( ){return   1;}\n}\n",
     );
 
-    expect($formatted)->toContain('class User')
-        ->and($formatted)->not->toContain('pint_stdin_')
-        ->and($formatted)->toContain('namespace App\\Models;')
-        ->and($formatted)->toContain('public function bar()');
+    expect($formatted)->toBeNull();
 })->skip(PHP_OS_FAMILY === 'Windows', 'Requires symlink support.');
 
 it('leaves excluded paths untouched', function () {
