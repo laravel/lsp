@@ -103,7 +103,7 @@ $translator = new class
         }
 
         return array_map(
-            fn ($file) => $this->fromFile($file, $path, $namespace),
+            fn ($file) => $this->fromFile($file, $realPath, $namespace),
             File::allFiles($realPath),
         );
     }
