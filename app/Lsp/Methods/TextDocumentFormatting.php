@@ -38,6 +38,10 @@ class TextDocumentFormatting implements Method
             return JsonRpcResponse::result($request->id(), null);
         }
 
+        // Formatting spawns Pint, so give a cancellation that arrived while
+        // the document was still being typed a chance to land first.
+        $request->cancelIfRequested();
+
         $formatted = $this->project->pint->format(
             FileUri::of($uri)->path(),
             $document->content,
