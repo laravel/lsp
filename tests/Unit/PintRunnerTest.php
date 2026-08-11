@@ -24,6 +24,25 @@ it('enables the blade rule for templates', function () {
         ->and($runner->command('/app/routes/web.php'))->not->toContain('--blade');
 });
 
+it('resolves a configured pint path', function () {
+    $relative = new PintRunner('/app', ['php'], 'tools/pint/vendor/bin/pint');
+    $absolute = new PintRunner('/app', ['php'], '/opt/pint/pint');
+    $blank = new PintRunner('/app', ['php'], '  ');
+
+    expect($relative->binary())->toBe('/app' . DIRECTORY_SEPARATOR . 'tools/pint/vendor/bin/pint')
+        ->and($absolute->binary())->toBe('/opt/pint/pint')
+        ->and($blank->binary())->toBe('/app' . DIRECTORY_SEPARATOR . 'vendor/bin/pint');
+});
+
+it('expands a home directory in a configured pint path', function () {
+    $home = getenv('HOME') ?: getenv('USERPROFILE');
+
+    expect((new PintRunner('/app', ['php'], '~/.composer/vendor/bin/pint'))->binary())
+        ->toBe($home . '/.composer/vendor/bin/pint')
+        ->and((new PintRunner('/app', ['php'], 'tilde~inside/pint'))->binary())
+        ->toBe('/app' . DIRECTORY_SEPARATOR . 'tilde~inside/pint');
+})->skip(!getenv('HOME') && !getenv('USERPROFILE'), 'Requires a home directory.');
+
 it('preserves the detected php command', function () {
     $runner = new PintRunner('/app', ['docker', 'compose', 'exec', 'app', 'php']);
 

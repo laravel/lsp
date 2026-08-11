@@ -7,9 +7,9 @@ namespace App\Lsp;
 class PintRunner
 {
     /**
-     * The path to Pint, relative to the project root.
+     * The default path to Pint, relative to the project root.
      */
-    protected const BINARY = 'vendor/bin/pint';
+    public const BINARY = 'vendor/bin/pint';
 
     /**
      * The maximum number of seconds to wait for Pint to format a document.
@@ -34,6 +34,7 @@ class PintRunner
     public function __construct(
         protected string $path,
         protected array $command,
+        protected string $pint = self::BINARY,
     ) {}
 
     /**
@@ -49,7 +50,41 @@ class PintRunner
      */
     public function binary(): string
     {
-        return $this->path . DIRECTORY_SEPARATOR . self::BINARY;
+        $pint = trim($this->pint);
+        $pint = $pint === '' ? self::BINARY : self::expandHome($pint);
+
+        return self::isAbsolute($pint) ? $pint : $this->path . DIRECTORY_SEPARATOR . $pint;
+    }
+
+    /**
+     * Expand a leading "~" in the given path.
+     *
+     * Pint is run without a shell, so a configured path pointing at a home
+     * directory would never be expanded for us.
+     */
+    protected static function expandHome(string $path): string
+    {
+        if ($path !== '~' && !str_starts_with($path, '~/') && !str_starts_with($path, '~\\')) {
+            return $path;
+        }
+
+        $home = getenv('HOME') ?: getenv('USERPROFILE');
+
+        return $home === false || $home === '' ? $path : $home . substr($path, 1);
+    }
+
+    /**
+     * Determine if the given path is absolute on either platform.
+     *
+     * A configured path may point outside the project, such as a Pint that
+     * was installed globally, so it is used as given rather than resolved
+     * against the project root.
+     */
+    protected static function isAbsolute(string $path): bool
+    {
+        return str_starts_with($path, '/')
+            || str_starts_with($path, '\\\\')
+            || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1;
     }
 
     /**

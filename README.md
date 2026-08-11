@@ -95,7 +95,8 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 | `definitionProvider`    | `boolean`  | `true`                                  | Advertise definition support to the editor. Definitions are resolved from enabled document link options. |
 | `pestGenerateDocBlocks` | `boolean`  | `true`                                  | Generate Pest helper docblocks and keep them updated when tests or Composer autoload files change.       |
 | `pestHelperFilePath`    | `string`   | `"storage/framework/testing/_pest.php"` | Set the Pest helper output path relative to the Laravel project root.                                    |
-| `documentFormattingProvider` | `boolean` | `true` when `vendor/bin/pint` exists | Format documents with the project's Pint. See [Formatting](#formatting).                            |
+| `documentFormattingProvider` | `boolean` | `true` when Pint is installed | Format documents with the project's Pint. See [Formatting](#formatting).                                 |
+| `pintPath`              | `string`   | `"vendor/bin/pint"`                     | Set the path to Pint, relative to the Laravel project root. Absolute paths and a leading `~` also work.   |
 
 The `phpEnvironment` option controls which PHP command is used when the server runs project data scripts. It accepts these values:
 
@@ -143,6 +144,18 @@ The server formats PHP and Blade documents with the project's own [Pint](https:/
 Formatting requires `laravel/pint` in the project and **Pint 1.30.5 or later**. Earlier versions named their temporary stdin file after a random identifier, so the `psr_autoloading` rule renamed the document's class to match it. The server detects that and returns no edits rather than corrupting the document.
 
 Formatting Blade templates additionally requires the prettier dependencies Pint installs for its `Pint/laravel_blade` rule.
+
+Pint is expected at `vendor/bin/pint`. Set `pintPath` when it lives elsewhere, such as a tools directory or a global installation:
+
+```json
+{
+    "initializationOptions": {
+        "pintPath": "~/.composer/vendor/bin/pint"
+    }
+}
+```
+
+Prefer the project's own Pint where there is one, so documents are formatted with the same version the project enforces everywhere else.
 
 Point your editor's PHP formatter at the server to use it:
 

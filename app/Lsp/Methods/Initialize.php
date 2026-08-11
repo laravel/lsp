@@ -53,7 +53,10 @@ final class Initialize implements Method
             $request->array('initializationOptions'),
             new ProjectIndex($this->container),
             new ScriptRunner($uri->path(), $phpCommand),
-            new PintRunner($uri->path(), $phpCommand),
+            new PintRunner($uri->path(), $phpCommand, (string) $request->string(
+                'initializationOptions.pintPath',
+                PintRunner::BINARY,
+            )),
         );
 
         $this->container->instance(Project::class, $project);
