@@ -355,7 +355,7 @@ $translator = new class
             'k'  => $key,
             'la' => $lang,
             'vs' => LazyCollection::make(function () use ($key, $lang, $relativePath, $lines) {
-                foreach ($this->getDotted($key, [], $lang) as $key => $value) {
+                foreach ($this->getDotted($key, $lang) as $key => $value) {
                     if (!array_key_exists($key, $lines) || is_array($value)) {
                         continue;
                     }
