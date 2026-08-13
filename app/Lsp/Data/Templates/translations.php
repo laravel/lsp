@@ -84,20 +84,10 @@ $translator = new class
         }
 
         if ($property !== null) {
-            $paths = Arr::wrap($property->getValue($loader));
-
-            if ($paths !== []) {
-                return $paths;
-            }
+            return Arr::wrap($property->getValue($loader));
         }
 
-        // A custom or decorated loader (a caching or database loader wrapping a
-        // FileLoader, for example) need not expose its filesystem paths, so fall back to
-        // the paths the framework itself uses.
-        return array_values(array_filter([
-            app()->langPath(),
-            resource_path('lang'),
-        ], 'is_dir'));
+        return [app()->langPath()];
     }
 
     public function collectFromPath(string $path, ?string $namespace = null)
