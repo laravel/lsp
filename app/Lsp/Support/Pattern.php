@@ -9,11 +9,26 @@ use Symfony\Component\Finder\Glob;
 class Pattern
 {
     /**
+     * The compiled expressions, keyed by file watcher pattern.
+     *
+     * @var array<string, string>
+     */
+    protected static array $expressions = [];
+
+    /**
      * Determine if the given path matches a file watcher pattern.
      */
     public static function matches(string $path, string $pattern): bool
     {
-        return preg_match(Glob::toRegex(self::normalize($pattern)), self::normalize($path)) === 1;
+        return preg_match(self::expression($pattern), self::normalize($path)) === 1;
+    }
+
+    /**
+     * Get the compiled expression for the given file watcher pattern.
+     */
+    protected static function expression(string $pattern): string
+    {
+        return self::$expressions[$pattern] ??= Glob::toRegex(self::normalize($pattern));
     }
 
     /**
