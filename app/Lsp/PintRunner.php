@@ -127,6 +127,8 @@ class PintRunner
             return null;
         }
 
+        $path = $this->physicalPath($path);
+
         $output = $this->run($this->command($path), $contents);
 
         if ($output === null || $output === '') {
@@ -145,6 +147,25 @@ class PintRunner
         }
 
         return $output;
+    }
+
+    /**
+     * Rewrite the document path to sit under the project's physical root.
+     *
+     * Pint resolves its exclusions against the working directory, which the
+     * operating system reports with symlinks already resolved. A root reached
+     * through a symlink would never match, quietly formatting files the
+     * project excludes, so hand Pint a path in the same terms.
+     */
+    protected function physicalPath(string $path): string
+    {
+        $root = realpath($this->path);
+
+        if ($root === false || $root === $this->path || !str_starts_with($path, $this->path)) {
+            return $path;
+        }
+
+        return $root . substr($path, strlen($this->path));
     }
 
     /**

@@ -111,6 +111,27 @@ it('declines to format when pint discards the document name', function () {
     expect($formatted)->toBeNull();
 })->skip(PHP_OS_FAMILY === 'Windows', 'Requires symlink support.');
 
+it('applies exclusions when the project root is reached through a symlink', function () {
+    $real = sys_get_temp_dir() . '/laravel-lsp-real-' . bin2hex(random_bytes(6));
+    $link = sys_get_temp_dir() . '/laravel-lsp-link-' . bin2hex(random_bytes(6));
+
+    mkdir($real . '/ignored', 0700, true);
+    symlink(base_path('vendor'), $real . '/vendor');
+    file_put_contents($real . '/pint.json', json_encode([
+        'preset'  => 'laravel',
+        'exclude' => ['ignored'],
+    ]));
+
+    if (!@symlink($real, $link)) {
+        $this->markTestSkipped('Unable to create a symlink on this platform.');
+    }
+
+    $contents = "<?php\n\nclass  Foo{}\n";
+
+    expect((new PintRunner($link, ['php']))->format($link . '/ignored/Foo.php', $contents))
+        ->toBe($contents);
+})->skip(PHP_OS_FAMILY === 'Windows', 'Requires symlink support.');
+
 it('leaves excluded paths untouched', function () {
     $runner = new PintRunner(base_path(), ['php']);
 
