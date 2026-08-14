@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Lsp;
 
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
+
 class PintRunner
 {
     /**
@@ -15,11 +18,6 @@ class PintRunner
      * The maximum number of seconds to wait for Pint to format a document.
      */
     protected const TIMEOUT = 10;
-
-    /**
-     * The number of bytes to read from Pint at a time.
-     */
-    protected const CHUNK = 8192;
 
     /**
      * The prefix Pint gives the temporary file it buffers stdin into.
@@ -184,113 +182,26 @@ class PintRunner
      */
     protected function run(array $command, string $input): ?string
     {
-        $process = proc_open($command, [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ], $pipes, $this->path);
+        $process = new Process($command, $this->path, null, $input, self::TIMEOUT);
 
-        if (!is_resource($process)) {
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException) {
+            info('Pint runner timed out.', ['command' => $command]);
+
             return null;
         }
 
-        [$output, $error, $timedOut] = $this->communicate($pipes, $input);
-
-        if ($timedOut) {
-            proc_terminate($process);
-        }
-
-        $exitCode = proc_close($process);
-
-        if ($timedOut || $exitCode !== 0) {
+        if (!$process->isSuccessful()) {
             info('Pint runner error.', [
                 'command'  => $command,
-                'stderr'   => $error,
-                'exitCode' => $exitCode,
-                'timedOut' => $timedOut,
+                'stderr'   => $process->getErrorOutput(),
+                'exitCode' => $process->getExitCode(),
             ]);
 
             return null;
         }
 
-        return $output;
-    }
-
-    /**
-     * Write the given contents to Pint while reading its output.
-     *
-     * Both streams are pumped together so a document larger than the pipe
-     * buffer cannot deadlock against a Pint process that has not started
-     * reading yet, such as one aborting on missing prettier dependencies.
-     *
-     * @param  array<int, resource>  $pipes
-     * @return array{0: string, 1: string, 2: bool}
-     */
-    protected function communicate(array $pipes, string $contents): array
-    {
-        foreach ($pipes as $pipe) {
-            stream_set_blocking($pipe, false);
-        }
-
-        if ($contents === '') {
-            fclose($pipes[0]);
-        }
-
-        $open = [1 => $pipes[1], 2 => $pipes[2]];
-        $buffers = [1 => '', 2 => ''];
-        $deadline = microtime(true) + self::TIMEOUT;
-
-        while ($open !== [] || $contents !== '') {
-            $remaining = $deadline - microtime(true);
-
-            if ($remaining <= 0) {
-                return [$buffers[1], $buffers[2], true];
-            }
-
-            $read = array_values($open);
-            $write = $contents === '' ? [] : [$pipes[0]];
-            $except = null;
-
-            $selected = stream_select(
-                $read,
-                $write,
-                $except,
-                (int) $remaining,
-                (int) (fmod($remaining, 1) * 1000000),
-            );
-
-            if ($selected === false) {
-                return [$buffers[1], $buffers[2], true];
-            }
-
-            foreach ($write as $pipe) {
-                $written = fwrite($pipe, $contents);
-
-                $contents = $written === false ? '' : substr($contents, $written);
-
-                if ($contents === '') {
-                    fclose($pipes[0]);
-                }
-            }
-
-            foreach ($read as $pipe) {
-                $key = array_search($pipe, $open, true);
-                $chunk = fread($pipe, self::CHUNK);
-
-                if ($chunk !== false && $chunk !== '') {
-                    $buffers[$key] .= $chunk;
-
-                    continue;
-                }
-
-                if (feof($pipe)) {
-                    fclose($pipe);
-
-                    unset($open[$key]);
-                }
-            }
-        }
-
-        return [$buffers[1], $buffers[2], false];
+        return $process->getOutput();
     }
 }
