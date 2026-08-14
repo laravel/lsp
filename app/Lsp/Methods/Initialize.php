@@ -37,7 +37,10 @@ final class Initialize implements Method
             return JsonRpcResponse::error($request->id(), -32602, 'Initialize request must include a workspace root URI.');
         }
 
-        $uri = FileUri::of($rootUri);
+        $uri = self::projectUri(
+            FileUri::of($rootUri),
+            (string) $request->string('initializationOptions.basePath', ''),
+        );
 
         if (!file_exists($uri->path('artisan'))) {
             return JsonRpcResponse::error($request->id(), -32602, 'Initialize request root URI must be a Laravel project.');
@@ -90,6 +93,20 @@ final class Initialize implements Method
                 'phpCommand'     => $project->scripts->command(),
             ],
         ]);
+    }
+
+    /**
+     * Resolve the URI of the Laravel project inside the workspace.
+     *
+     * A workspace does not always have the application at its root. It may
+     * sit in a subdirectory beside a frontend or another service, so the
+     * base path says where to look for it, relative to the workspace root.
+     */
+    public static function projectUri(FileUri $uri, string $basePath): FileUri
+    {
+        $basePath = trim(str_replace('\\', '/', trim($basePath)), '/');
+
+        return $basePath === '' || $basePath === '.' ? $uri : $uri->joinPaths($basePath);
     }
 
     /**

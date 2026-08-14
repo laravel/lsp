@@ -97,6 +97,7 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 
 | Option                  | Type       | Default                                 | Description                                                                                              |
 | ----------------------- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `basePath`              | `string`   | `""`                                    | Set where the Laravel application sits relative to the workspace root, for a project kept in a subdirectory. |
 | `phpEnvironment`        | `string`   | `"auto"`                                | Select the environment used to detect the PHP command for indexing project data.                         |
 | `phpCommand`            | `string[]` | Detected from `phpEnvironment`          | Use an explicit command and arguments, such as `["php"]` or `["./vendor/bin/sail", "php"]`.              |
 | `definitionProvider`    | `boolean`  | `true`                                  | Advertise definition support to the editor. Definitions are resolved from enabled document link options. |
