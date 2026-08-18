@@ -11,6 +11,7 @@ use App\Lsp\Project;
 use App\Lsp\ProjectIndex;
 use App\Lsp\ScriptRunner;
 use App\Lsp\Support\FileUri;
+use App\Lsp\Support\PositionEncoding;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
 use Illuminate\Container\Container;
@@ -54,6 +55,10 @@ final class Initialize implements Method
 
         $this->container->instance(Project::class, $project);
 
+        $encoding = PositionEncoding::negotiate($request->array('capabilities.general.positionEncodings'));
+
+        $this->container->instance(PositionEncoding::class, $encoding);
+
         $this->logger->info('Initialized Laravel LSP.', [
             'rootUri'               => (string) $project->uri,
             'processId'             => $request->get('processId'),
@@ -61,10 +66,12 @@ final class Initialize implements Method
             'initializationOptions' => $project->all(),
             'phpEnvironment'        => $project->phpEnvironment(),
             'phpCommand'            => $project->scripts->command(),
+            'positionEncoding'      => $encoding->value,
         ]);
 
         return JsonRpcResponse::result($request->id(), [
             'capabilities' => [
+                'positionEncoding' => $encoding->value,
                 'textDocumentSync' => [
                     'openClose' => true,
                     'change'    => 1,
