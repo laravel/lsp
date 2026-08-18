@@ -43,11 +43,16 @@ class PhpCommandDetector
     /**
      * Auto-detect the PHP command.
      *
+     * Yerd and Lerd are probed after the existing environments so detection
+     * order does not change for anyone, but before "local": Lerd puts a "php"
+     * shim on the PATH that execs into its container, so the local probe would
+     * otherwise report a container path that does not exist on the host.
+     *
      * @return string[]
      */
     protected function auto(): array
     {
-        foreach (['herd', 'valet', 'sail', 'lando', 'ddev', 'local'] as $environment) {
+        foreach (['herd', 'valet', 'sail', 'lando', 'ddev', 'yerd', 'lerd', 'local'] as $environment) {
             $command = $this->{$environment}();
 
             if ($command !== ['php']) {
