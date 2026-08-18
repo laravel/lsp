@@ -32,6 +32,7 @@ class PhpCommandDetector
             'sail'  => $this->sail(),
             'lando' => $this->lando(),
             'ddev'  => $this->ddev(),
+            'yerd'  => $this->yerd(),
             'local' => $this->local(),
             'auto'  => $this->auto(),
             default => ['php'],
@@ -116,6 +117,20 @@ class PhpCommandDetector
         return $this->run(['ddev', 'php', '-r', 'echo PHP_BINARY;']) === null
             ? ['php']
             : ['ddev', 'php'];
+    }
+
+    /**
+     * Resolve the Yerd PHP command.
+     *
+     * Yerd builds native PHP binaries on the host and resolves the version from
+     * the site the working directory belongs to, so "yerd which php" reports the
+     * same binary "yerd exec php" would run.
+     *
+     * @return string[]
+     */
+    protected function yerd(): array
+    {
+        return $this->binaryCommand($this->run(['yerd', 'which', 'php']));
     }
 
     /**
