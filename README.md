@@ -107,12 +107,14 @@ The `phpEnvironment` option controls which PHP command is used when the server r
 
 | Value   | PHP command behavior                                               |
 | ------- | ------------------------------------------------------------------ |
-| `auto`  | Try Herd, Valet, Sail, Lando, DDEV, then local PHP                 |
+| `auto`  | Try Herd, Valet, Sail, Lando, DDEV, Yerd, Lerd, then local PHP     |
 | `herd`  | Use `herd which-php`                                               |
 | `valet` | Use `valet which-php`                                              |
 | `sail`  | Use `./vendor/bin/sail php` when Sail is running                   |
 | `lando` | Use `lando php` when available                                     |
 | `ddev`  | Use `ddev php` when available                                      |
+| `yerd`  | Use `yerd which php`                                               |
+| `lerd`  | Use `lerd php` when available                                      |
 | `local` | Use the local PHP binary resolved from `php -r 'echo PHP_BINARY;'` |
 
 If detection fails, or an unknown value is provided, the server falls back to `php`.
