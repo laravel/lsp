@@ -64,7 +64,7 @@ jobs:
 
       - name: SPC Combine
         run: |
-          ./spc micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
+          ./spc micro:combine builds/laravel-lsp -I "memory_limit=512M" -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -110,7 +110,7 @@ jobs:
 
       - name: SPC Combine
         run: |
-          .\spc-windows-x64.exe micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-x64-win32
+          .\spc-windows-x64.exe micro:combine builds/laravel-lsp -I "memory_limit=512M" -O bin/server-${{ github.ref_name }}-x64-win32
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

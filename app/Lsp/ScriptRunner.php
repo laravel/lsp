@@ -66,8 +66,8 @@ class ScriptRunner
             if (!$process->isSuccessful()) {
                 info('PHP runner error.', [
                     'command'  => $process->getCommandLine(),
-                    'stdout'   => $process->getOutput(),
-                    'stderr'   => $process->getErrorOutput(),
+                    'stdout'   => $this->truncateOutput($process->getOutput()),
+                    'stderr'   => $this->truncateOutput($process->getErrorOutput()),
                     'exitCode' => $process->getExitCode(),
                 ]);
 
@@ -135,11 +135,26 @@ class ScriptRunner
         }
 
         $decoded = json_decode($output, true);
+        unset($output);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             return null;
         }
 
         return $decoded;
+    }
+
+    /**
+     * Truncate process output before writing it to the log.
+     */
+    protected function truncateOutput(string $output, int $limit = 2000): string
+    {
+        $bytes = strlen($output);
+
+        if ($bytes <= $limit) {
+            return $output;
+        }
+
+        return substr($output, 0, $limit) . '... (truncated, ' . $bytes . ' bytes)';
     }
 }
