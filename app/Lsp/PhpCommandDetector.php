@@ -33,6 +33,7 @@ class PhpCommandDetector
             'lando' => $this->lando(),
             'ddev'  => $this->ddev(),
             'yerd'  => $this->yerd(),
+            'lerd'  => $this->lerd(),
             'local' => $this->local(),
             'auto'  => $this->auto(),
             default => ['php'],
@@ -131,6 +132,22 @@ class PhpCommandDetector
     protected function yerd(): array
     {
         return $this->binaryCommand($this->run(['yerd', 'which', 'php']));
+    }
+
+    /**
+     * Resolve the Lerd PHP command.
+     *
+     * Lerd runs PHP inside a rootless Podman container, so the binary path it
+     * reports is meaningless on the host. Its "lerd php" passthrough execs into
+     * the container the working directory's site is served from.
+     *
+     * @return string[]
+     */
+    protected function lerd(): array
+    {
+        return $this->run(['lerd', 'php', '-r', 'echo PHP_BINARY;']) === null
+            ? ['php']
+            : ['lerd', 'php'];
     }
 
     /**
