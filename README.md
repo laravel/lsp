@@ -100,6 +100,7 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 | `phpEnvironment`        | `string`   | `"auto"`                                | Select the environment used to detect the PHP command for indexing project data.                         |
 | `phpCommand`            | `string[]` | Detected from `phpEnvironment`          | Use an explicit command and arguments, such as `["php"]` or `["./vendor/bin/sail", "php"]`.              |
 | `definitionProvider`    | `boolean`  | `true`                                  | Advertise definition support to the editor. Definitions are resolved from enabled document link options. |
+| `referencesProvider`    | `boolean`  | `true`                                  | Advertise reference support to the editor. References are searched across the workspace.                 |
 | `pestGenerateDocBlocks` | `boolean`  | `true`                                  | Generate Pest helper docblocks and keep them updated when tests or Composer autoload files change.       |
 | `pestHelperFilePath`    | `string`   | `"storage/framework/testing/_pest.php"` | Set the Pest helper output path relative to the Laravel project root.                                    |
 
@@ -118,6 +119,23 @@ The `phpEnvironment` option controls which PHP command is used when the server r
 If detection fails, or an unknown value is provided, the server falls back to `php`.
 
 When `phpCommand` is a non-empty array, it takes precedence over `phpEnvironment`.
+
+### Finding References
+
+With `referencesProvider` enabled, `textDocument/references` reports every place in the workspace that uses the Laravel symbol under the cursor. Put the cursor inside a route name, view name, config key, or translation key and the server returns each other use of that same name, across both PHP and Blade files.
+
+The search is limited to files whose contents contain the exact symbol, and `vendor`, `node_modules`, `storage`, and build output are never searched.
+
+These are usages, not declarations. Asking for references to `users.index` from `route('users.index')` finds the other calls that build that URL, not the `->name('users.index')` that declares it.
+
+Each feature has its own option, so an individual symbol type can be left out of the search:
+
+| Option                   | Description                             |
+| ------------------------ | --------------------------------------- |
+| `routeReferences`        | Search for uses of a route name.        |
+| `viewReferences`         | Search for uses of a view name.         |
+| `configReferences`       | Search for uses of a config key.        |
+| `translationReferences`  | Search for uses of a translation key.   |
 
 ### Feature Options
 
