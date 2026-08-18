@@ -75,6 +75,18 @@ class FileUri implements JsonSerializable
     }
 
     /**
+     * Determine if the given path resolves to somewhere inside this URI.
+     */
+    public function contains(string $path): bool
+    {
+        $basePath = self::resolve($this->path());
+        $resolved = self::resolve($path);
+
+        return $basePath !== ''
+            && ($resolved === $basePath || str_starts_with($resolved, rtrim($basePath, '/') . '/'));
+    }
+
+    /**
      * Resolve a filesystem path that is not required to exist.
      *
      * The deepest existing ancestor is resolved with realpath() so symlinked
