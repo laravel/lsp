@@ -10,6 +10,7 @@ use App\Lsp\Contracts\DiagnosticProvider;
 use App\Lsp\Contracts\FileWatcher;
 use App\Lsp\Contracts\HoverProvider;
 use App\Lsp\Contracts\LinkProvider;
+use App\Lsp\Contracts\ReferenceProvider;
 use App\Lsp\Features\AppBindings\AppBindingCompletionProvider;
 use App\Lsp\Features\AppBindings\AppBindingDiagnosticProvider;
 use App\Lsp\Features\AppBindings\AppBindingHoverProvider;
@@ -29,6 +30,7 @@ use App\Lsp\Features\Configs\ConfigCompletionProvider;
 use App\Lsp\Features\Configs\ConfigDiagnosticProvider;
 use App\Lsp\Features\Configs\ConfigHoverProvider;
 use App\Lsp\Features\Configs\ConfigLinkProvider;
+use App\Lsp\Features\Configs\ConfigReferenceProvider;
 use App\Lsp\Features\ControllerActions\ControllerActionCompletionProvider;
 use App\Lsp\Features\ControllerActions\ControllerActionDiagnosticProvider;
 use App\Lsp\Features\ControllerActions\ControllerActionLinkProvider;
@@ -61,6 +63,7 @@ use App\Lsp\Features\Routes\RouteDiagnosticProvider;
 use App\Lsp\Features\Routes\RouteHoverProvider;
 use App\Lsp\Features\Routes\RouteLinkProvider;
 use App\Lsp\Features\Routes\RouteParameterCompletionProvider;
+use App\Lsp\Features\Routes\RouteReferenceProvider;
 use App\Lsp\Features\Storage\StorageCompletionProvider;
 use App\Lsp\Features\Storage\StorageDiagnosticProvider;
 use App\Lsp\Features\Storage\StorageLinkProvider;
@@ -70,6 +73,7 @@ use App\Lsp\Features\Translations\TranslationHoverProvider;
 use App\Lsp\Features\Translations\TranslationLinkProvider;
 use App\Lsp\Features\Translations\TranslationLocaleCompletionProvider;
 use App\Lsp\Features\Translations\TranslationParameterCompletionProvider;
+use App\Lsp\Features\Translations\TranslationReferenceProvider;
 use App\Lsp\Features\Validation\ValidationCompletionProvider;
 use App\Lsp\Features\Views\ViewCodeActionProvider;
 use App\Lsp\Features\Views\ViewCompletionProvider;
@@ -77,6 +81,7 @@ use App\Lsp\Features\Views\ViewContentCompletionProvider;
 use App\Lsp\Features\Views\ViewDiagnosticProvider;
 use App\Lsp\Features\Views\ViewHoverProvider;
 use App\Lsp\Features\Views\ViewLinkProvider;
+use App\Lsp\Features\Views\ViewReferenceProvider;
 use App\Lsp\Watchers\DataProviderWatcher;
 use App\Lsp\Watchers\PestHelperWatcher;
 use Illuminate\Container\Container;
@@ -191,6 +196,18 @@ class FeatureRegistry
     ];
 
     /**
+     * Reference providers.
+     *
+     * @var array<int, class-string<ReferenceProvider>>
+     */
+    public array $references = [
+        RouteReferenceProvider::class,
+        ViewReferenceProvider::class,
+        ConfigReferenceProvider::class,
+        TranslationReferenceProvider::class,
+    ];
+
+    /**
      * File watchers.
      *
      * @var array<int, class-string<FileWatcher>>
@@ -249,6 +266,16 @@ class FeatureRegistry
     }
 
     /**
+     * Resolve reference providers.
+     *
+     * @return array<int, ReferenceProvider>
+     */
+    public function references(): array
+    {
+        return $this->resolve($this->references);
+    }
+
+    /**
      * Resolve file watcher providers.
      *
      * @return array<int, FileWatcher>
@@ -271,7 +298,7 @@ class FeatureRegistry
     /**
      * Resolve given classes from the container.
      *
-     * @param array<int, class-string> $classes
+     * @param  array<int, class-string>  $classes
      * @return array<int, mixed>
      */
     protected function resolve(array $classes): array
