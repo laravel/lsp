@@ -6,6 +6,8 @@ namespace App\Lsp\Watchers;
 
 use App\Lsp\Contracts\FileWatcher;
 use App\Lsp\Project;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Throwable;
 
 class PestHelperWatcher implements FileWatcher
@@ -18,8 +20,10 @@ class PestHelperWatcher implements FileWatcher
     /**
      * Create a new Pest helper watcher instance.
      */
-    public function __construct(protected Project $project)
-    {
+    public function __construct(
+        protected Project $project,
+        protected LoggerInterface $logger = new NullLogger,
+    ) {
         //
     }
 
@@ -127,6 +131,11 @@ class PestHelperWatcher implements FileWatcher
         $path = $this->project->path($configured);
 
         if (!$this->project->uri()->contains($path)) {
+            $this->logger->warning('Ignoring a Pest helper file path outside of the project root.', [
+                'pestHelperFilePath' => $configured,
+                'fallback'           => self::DEFAULT_HELPER_FILE_PATH,
+            ]);
+
             return $this->defaultHelperFilePath();
         }
 
