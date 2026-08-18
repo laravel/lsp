@@ -65,6 +65,18 @@ class JsonRpcResponse
     }
 
     /**
+     * Get a copy of the response with its result passed through the callback.
+     */
+    public function mapResult(callable $callback): static
+    {
+        if (!array_key_exists('result', $this->content)) {
+            return $this;
+        }
+
+        return new static([...$this->content, 'result' => $callback($this->content['result'])]);
+    }
+
+    /**
      * Get the response as an array.
      *
      * @return array<string, mixed>

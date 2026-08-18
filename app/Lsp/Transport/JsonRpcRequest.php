@@ -62,6 +62,20 @@ class JsonRpcRequest
     }
 
     /**
+     * Get a copy of the request with the given parameters.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function withParams(array $params): static
+    {
+        $request = clone $this;
+
+        $request->params = $params;
+
+        return $request;
+    }
+
+    /**
      * Get the request ID.
      */
     public function id(): int|string
