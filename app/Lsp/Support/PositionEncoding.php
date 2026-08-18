@@ -106,7 +106,7 @@ enum PositionEncoding: string
     {
         // A four byte sequence is outside the basic multilingual plane, so it is
         // a surrogate pair in UTF-16 and a single code point everywhere else.
-        return $this === self::Utf16 && $byte >= 0xF0 ? 2 : 1;
+        return $this === self::Utf16 && $this->widthFor($byte) === 4 ? 2 : 1;
     }
 
     /**
@@ -115,6 +115,7 @@ enum PositionEncoding: string
     protected function widthFor(int $byte): int
     {
         return match (true) {
+            $byte >= 0xF8 => 1, // Never a valid lead byte, so it stands alone.
             $byte >= 0xF0 => 4,
             $byte >= 0xE0 => 3,
             $byte >= 0xC0 => 2,
