@@ -11,6 +11,11 @@ use Throwable;
 class PestHelperWatcher implements FileWatcher
 {
     /**
+     * The workspace-relative path used when no valid path is configured.
+     */
+    protected const DEFAULT_HELPER_FILE_PATH = 'storage/framework/testing/_pest.php';
+
+    /**
      * Create a new Pest helper watcher instance.
      */
     public function __construct(protected Project $project)
@@ -113,10 +118,27 @@ class PestHelperWatcher implements FileWatcher
      */
     protected function helperFilePath(): string
     {
-        $options = $this->project->all();
-        $relativePath = $options['pestHelperFilePath'] ?? 'storage/framework/testing/_pest.php';
+        $configured = $this->project->all()['pestHelperFilePath'] ?? null;
 
-        return $this->project->path(is_string($relativePath) ? $relativePath : 'storage/framework/testing/_pest.php');
+        if (!is_string($configured) || trim($configured) === '') {
+            return $this->defaultHelperFilePath();
+        }
+
+        $path = $this->project->path($configured);
+
+        if (!$this->project->uri()->contains($path)) {
+            return $this->defaultHelperFilePath();
+        }
+
+        return $path;
+    }
+
+    /**
+     * Get the default Pest helper file path.
+     */
+    protected function defaultHelperFilePath(): string
+    {
+        return $this->project->path(self::DEFAULT_HELPER_FILE_PATH);
     }
 
     /**
