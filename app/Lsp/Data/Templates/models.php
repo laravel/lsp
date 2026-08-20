@@ -65,13 +65,49 @@ $models = new class($factory)
         $this->output = new BufferedOutput;
     }
 
+    /**
+     * Get the files that may declare the application's models.
+     *
+     * Models are not required to live in app/Models, so each namespace the
+     * application autoloads is searched for a Models directory. Only the
+     * production autoload roots are used, since the dev roots cover tests
+     * that are not safe to include.
+     */
+    protected function modelFiles()
+    {
+        $composer = base_path('composer.json');
+        $roots = collect();
+
+        if (is_file($composer)) {
+            $config = json_decode((string) file_get_contents($composer), true);
+
+            $roots = collect($config['autoload']['psr-4'] ?? [])
+                ->flatten()
+                ->map(fn ($path) => base_path(trim((string) $path, '/')));
+        }
+
+        return $roots
+            ->push(base_path('app'))
+            ->map(fn ($path) => realpath($path) ?: null)
+            ->filter(fn ($path) => $path !== null && File::isDirectory($path))
+            ->unique()
+            ->flatMap(fn ($root) => File::allFiles($root))
+            ->filter(fn (SplFileInfo $file) => $file->getExtension() === 'php')
+            ->map(fn (SplFileInfo $file) => $file->getRealPath() ?: $file->getPathname())
+            ->filter(fn ($path) => str_contains(str_replace('\\', '/', $path), '/Models/'))
+            ->unique()
+            ->values();
+    }
+
     public function all()
     {
-        if (File::isDirectory(base_path('app/Models'))) {
-            collect(File::allFiles(base_path('app/Models')))
-                ->filter(fn (SplFileInfo $file) => $file->getExtension() === 'php')
-                ->each(fn ($file) => include_once ($file));
-        }
+        $this->modelFiles()->each(function ($file) {
+            try {
+                include_once $file;
+            } catch (Throwable $e) {
+                // A file that refuses to load should not hide every other model.
+            }
+        });
 
         return collect(get_declared_classes())
             ->filter(fn ($class) => is_subclass_of($class, Model::class))
