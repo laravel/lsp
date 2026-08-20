@@ -52,7 +52,7 @@ class FileUri implements JsonSerializable
 
         return $line === null
             ? $target
-            : new self($target.'#L'.max(1, $line));
+            : new self($target . '#L' . max(1, $line));
     }
 
     /**
@@ -66,23 +66,47 @@ class FileUri implements JsonSerializable
             return $path;
         }
 
-        foreach ([$path, realpath($path) ?: null] as $candidate) {
-            if ($candidate === null) {
-                continue;
-            }
+        $normalized = self::normalizePath($path);
 
-            $normalized = self::normalizePath($candidate);
+        // The common case: the client sent a path in the same form the root was
+        // registered in, so neither side needs resolving.
+        if (($relative = self::relativeTo($normalized, $basePath)) !== null) {
+            return $relative;
+        }
 
-            if ($normalized === $basePath) {
-                return '';
-            }
+        // Otherwise the root, the path, or both may be reached through a symlink.
+        // Resolving one side is not enough, since either may be the symlinked one.
+        $basePaths = [$basePath];
 
-            if (str_starts_with($normalized, $basePath.'/')) {
-                return substr($normalized, strlen($basePath) + 1);
+        if (($resolvedBase = realpath($this->path())) !== false) {
+            $basePaths[] = rtrim(self::normalizePath($resolvedBase), '/');
+        }
+
+        if (($resolvedPath = realpath($path)) !== false) {
+            $normalized = self::normalizePath($resolvedPath);
+        }
+
+        foreach ($basePaths as $candidate) {
+            if (($relative = self::relativeTo($normalized, $candidate)) !== null) {
+                return $relative;
             }
         }
 
         return $path;
+    }
+
+    /**
+     * Get the given normalized path relative to a base path, if it is inside it.
+     */
+    protected static function relativeTo(string $path, string $basePath): ?string
+    {
+        if ($path === $basePath) {
+            return '';
+        }
+
+        return str_starts_with($path, $basePath . '/')
+            ? substr($path, strlen($basePath) + 1)
+            : null;
     }
 
     /**
@@ -106,7 +130,7 @@ class FileUri implements JsonSerializable
      */
     public static function fromPath(string $path): self
     {
-        return new self('file://'.self::encodePath($path));
+        return new self('file://' . self::encodePath($path));
     }
 
     /**
@@ -131,7 +155,7 @@ class FileUri implements JsonSerializable
         $path = str_replace('\\', '/', $path);
 
         if (preg_match('/^[A-Za-z]:(?:\/|$)/', $path) === 1) {
-            return strtoupper($path[0]).substr($path, 1);
+            return strtoupper($path[0]) . substr($path, 1);
         }
 
         return $path;
@@ -143,7 +167,7 @@ class FileUri implements JsonSerializable
     protected static function encodePath(string $path): string
     {
         $path = str_replace('\\', '/', $path);
-        $path = '/'.ltrim($path, '/');
+        $path = '/' . ltrim($path, '/');
 
         return implode('/', array_map('rawurlencode', explode('/', $path)));
     }
