@@ -71,3 +71,42 @@ test('a detected argument reports whether its string is interpolated', function 
     expect($plain->isInterpolated())->toBeFalse();
     expect($interpolated->isInterpolated())->toBeTrue();
 });
+
+function stringChild(string $value, bool $interpolated = false): array
+{
+    return array_merge([
+        'type'  => 'string',
+        'value' => $value,
+        'start' => ['line' => 0, 'column' => 0],
+        'end'   => ['line' => 0, 'column' => strlen($value)],
+    ], $interpolated ? ['interpolated' => true] : []);
+}
+
+test('a heredoc or nowdoc value drops the newline before its closing identifier', function (string $code, string $expected) {
+    $param = firstStringParam($code);
+
+    expect($param)->not->toBeNull();
+    expect($param['value'])->toBe($expected);
+})->with([
+    ["config(<<<'EOT'\nauth.passwords.users.table\nEOT);", 'auth.passwords.users.table'],
+    ["config(<<<EOT\nauth.passwords.users.table\nEOT);", 'auth.passwords.users.table'],
+    ["config(<<<'EOT'\nline1\nline2\nEOT);", "line1\nline2"],
+    ["config('auth.passwords.users.table');", 'auth.passwords.users.table'],
+]);
+
+test('literal string values exclude interpolated members of an array argument', function () {
+    $argument = new DetectedArgument([], 0, [
+        'type'     => 'array',
+        'children' => [
+            ['value' => stringChild('auth')],
+            ['value' => stringChild('role:{$g}', true)],
+            ['value' => stringChild('verified')],
+        ],
+    ]);
+
+    expect(array_column($argument->stringValues(), 'value'))
+        ->toBe(['auth', 'role:{$g}', 'verified']);
+
+    expect(array_column($argument->literalStringValues(), 'value'))
+        ->toBe(['auth', 'verified']);
+});

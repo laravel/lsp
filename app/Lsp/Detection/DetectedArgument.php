@@ -102,8 +102,9 @@ class DetectedArgument
     {
         if ($this->param['type'] === 'string') {
             return [[
-                'value' => $this->param['value'],
-                'range' => $this->range(),
+                'value'        => $this->param['value'],
+                'range'        => $this->range(),
+                'interpolated' => $this->isInterpolated(),
             ]];
         }
 
@@ -117,12 +118,26 @@ class DetectedArgument
             }
 
             $values[] = [
-                'value' => $value['value'],
-                'range' => $this->rangeForValue($value),
+                'value'        => $value['value'],
+                'range'        => $this->rangeForValue($value),
+                'interpolated' => ($value['interpolated'] ?? false) === true,
             ];
         }
 
         return $values;
+    }
+
+    /**
+     * Get the detected string values, excluding interpolated ones.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function literalStringValues(): array
+    {
+        return array_values(array_filter(
+            $this->stringValues(),
+            fn (array $value): bool => $value['interpolated'] !== true,
+        ));
     }
 
     /**
