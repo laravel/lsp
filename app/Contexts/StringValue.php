@@ -6,6 +6,8 @@ class StringValue extends AbstractContext
 {
     public ?string $value = null;
 
+    public bool $interpolated = false;
+
     protected bool $hasChildren = false;
 
     public function type(): string
@@ -15,8 +17,9 @@ class StringValue extends AbstractContext
 
     public function castToArray(): array
     {
-        return [
-            'value' => $this->value,
-        ];
+        return array_merge(
+            ['value' => $this->value],
+            $this->interpolated ? ['interpolated' => true] : [],
+        );
     }
 }

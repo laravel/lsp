@@ -76,6 +76,14 @@ class DetectedArgument
     }
 
     /**
+     * Determine if the argument is an interpolated string.
+     */
+    public function isInterpolated(): bool
+    {
+        return ($this->param['interpolated'] ?? false) === true;
+    }
+
+    /**
      * Get the detected parameter value as a string.
      */
     public function stringValue(): ?string

@@ -5,6 +5,7 @@ namespace App\Parsers;
 use App\Contexts\AbstractContext;
 use App\Contexts\StringValue;
 use App\Parser\Settings;
+use Microsoft\PhpParser\Node;
 use Microsoft\PhpParser\Node\StringLiteral;
 use Microsoft\PhpParser\PositionUtilities;
 
@@ -18,6 +19,7 @@ class StringLiteralParser extends AbstractParser
     public function parse(StringLiteral $node)
     {
         $this->context->value = $node->getStringContentsText();
+        $this->context->interpolated = $this->isInterpolated($node);
 
         if (Settings::$capturePosition) {
             $range = PositionUtilities::getRangeFromPosition(
@@ -34,6 +36,29 @@ class StringLiteralParser extends AbstractParser
         }
 
         return $this->context;
+    }
+
+    /**
+     * Determine if the string contains an interpolated expression.
+     *
+     * The contents are read straight from the source, so an interpolated
+     * string yields the expression verbatim rather than its value. Only
+     * interpolation produces child nodes; escaped dollars, single quoted
+     * strings and nowdocs are plain tokens.
+     */
+    protected function isInterpolated(StringLiteral $node): bool
+    {
+        if (!is_array($node->children)) {
+            return false;
+        }
+
+        foreach ($node->children as $child) {
+            if ($child instanceof Node) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function initNewContext(): ?AbstractContext
