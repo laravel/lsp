@@ -152,3 +152,59 @@ test('leaves outgoing diagnostics alone when utf-8 is negotiated', function () {
     expect(end($transport->sent)['params']['diagnostics'][0]['range']['start'])
         ->toBe(['line' => 1, 'character' => 24]);
 });
+
+test('converts positions in a server-initiated request', function () {
+    [$server, $transport, $container] = bootServer(['utf-16']);
+
+    $uri = 'file:///project/app/Http/Controllers/HomeController.php';
+
+    $container[DocumentManager::class]->open($uri, "<?php\n\$x = '日本語'; view('x');");
+
+    $server->send('workspace/applyEdit', [
+        'edit' => [
+            'changes' => [
+                $uri => [[
+                    'range' => [
+                        'start' => ['line' => 1, 'character' => 24],
+                        'end'   => ['line' => 1, 'character' => 27],
+                    ],
+                    'newText' => 'home',
+                ]],
+            ],
+        ],
+    ]);
+
+    $sent = end($transport->sent);
+
+    expect($sent['params']['edit']['changes'][$uri][0]['range'])->toBe([
+        'start' => ['line' => 1, 'character' => 18],
+        'end'   => ['line' => 1, 'character' => 21],
+    ]);
+
+    // send() is a request, not a notification, so it still carries an id.
+    expect($sent)->toHaveKey('id');
+});
+
+test('leaves a server-initiated request alone when utf-8 is negotiated', function () {
+    [$server, $transport, $container] = bootServer(['utf-8']);
+
+    $uri = 'file:///project/app/Http/Controllers/HomeController.php';
+
+    $container[DocumentManager::class]->open($uri, "<?php\n\$x = '日本語'; view('x');");
+
+    $server->send('workspace/applyEdit', [
+        'edit' => [
+            'changes' => [
+                $uri => [[
+                    'range' => [
+                        'start' => ['line' => 1, 'character' => 24],
+                        'end'   => ['line' => 1, 'character' => 27],
+                    ],
+                ]],
+            ],
+        ],
+    ]);
+
+    expect(end($transport->sent)['params']['edit']['changes'][$uri][0]['range']['start'])
+        ->toBe(['line' => 1, 'character' => 24]);
+});

@@ -166,17 +166,11 @@ final class Server
      */
     public function send(string $method, ?array $params = null)
     {
-        $data = [
+        $this->emit([
             'jsonrpc' => '2.0',
             'id'      => $this->lastRequestId++,
             'method'  => $method,
-        ];
-
-        if (!is_null($params)) {
-            $data['params'] = $params;
-        }
-
-        $this->transport->send(json_encode($data));
+        ], $params);
     }
 
     /**
@@ -184,11 +178,24 @@ final class Server
      */
     public function notify(string $method, ?array $params = null)
     {
-        $data = [
+        $this->emit([
             'jsonrpc' => '2.0',
             'method'  => $method,
-        ];
+        ], $params);
+    }
 
+    /**
+     * Send a server-initiated message, converting the positions it carries.
+     *
+     * Responses go out through respond(), which encodes against the document
+     * resolved from the request being answered. A server-initiated message has
+     * no such request, so the translator resolves the document per payload.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>|null  $params
+     */
+    protected function emit(array $data, ?array $params): void
+    {
         if (!is_null($params)) {
             $data['params'] = $this->positions()->toClient($params);
         }
