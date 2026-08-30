@@ -7,15 +7,6 @@ function detect($values)
     return json_encode($values, JSON_PRETTY_PRINT);
 }
 
-function detectFromArray($values)
-{
-    return array_map(fn ($v) => array_merge([
-        'class'  => null,
-        'method' => null,
-        'params' => [],
-    ], $v), $values);
-}
-
 function result($file)
 {
     $code = fromFile($file);
@@ -27,89 +18,30 @@ function result($file)
 }
 
 test('extract functions and string params', function () {
-    expect(result('detect/routes'))->toBe(detect([
-
+    expect(result('detect/routes'))->toBe(detect(
         [
             [
-                'method' => 'basicFunc',
-                'class'  => null,
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'whatever',
-                        'start' => [
-                            'line'   => 9,
-                            'column' => 10,
-                        ],
-                        'end' => [
-                            'line'   => 9,
-                            'column' => 18,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'home.show',
-                        'start' => [
-                            'line'   => 11,
-                            'column' => 55,
-                        ],
-                        'end' => [
-                            'line'   => 11,
-                            'column' => 64,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'get',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => '/',
-                        'start' => [
-                            'line'   => 11,
-                            'column' => 11,
-                        ],
-                        'end' => [
-                            'line'   => 11,
-                            'column' => 12,
-                        ],
-                    ],
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'unknown',
-                                    'value' => 'HomeController::class',
-                                ],
-                            ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
+                'type'       => 'methodCall',
+                'methodName' => 'name',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
                                     'type'  => 'string',
-                                    'value' => 'show',
+                                    'value' => 'home.show',
                                     'start' => [
-                                        'line'   => 11,
-                                        'column' => 40,
+                                        'line'   => 4,
+                                        'column' => 55,
                                     ],
                                     'end' => [
-                                        'line'   => 11,
-                                        'column' => 44,
+                                        'line'   => 4,
+                                        'column' => 64,
                                     ],
                                 ],
                             ],
@@ -118,238 +50,424 @@ test('extract functions and string params', function () {
                 ],
             ],
             [
-                'method' => 'group',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'      => 'closure',
-                        'arguments' => [],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'middleware',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'signed',
-                        'start' => [
-                            'line'   => 13,
-                            'column' => 18,
-                        ],
-                        'end' => [
-                            'line'   => 13,
-                            'column' => 24,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'profile.edit',
-                        'start' => [
-                            'line'   => 15,
-                            'column' => 68,
-                        ],
-                        'end' => [
-                            'line'   => 15,
-                            'column' => 80,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'get',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'profile',
-                        'start' => [
-                            'line'   => 15,
-                            'column' => 15,
-                        ],
-                        'end' => [
-                            'line'   => 15,
-                            'column' => 22,
-                        ],
-                    ],
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'unknown',
-                                    'value' => 'ProfileController::class',
-                                ],
-                            ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
+                'type'       => 'methodCall',
+                'methodName' => 'get',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 2,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
                                     'type'  => 'string',
-                                    'value' => 'edit',
+                                    'value' => '/',
                                     'start' => [
-                                        'line'   => 15,
-                                        'column' => 53,
+                                        'line'   => 4,
+                                        'column' => 11,
                                     ],
                                     'end' => [
-                                        'line'   => 15,
-                                        'column' => 57,
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'profile.edit',
-                        'start' => [
-                            'line'   => 15,
-                            'column' => 68,
-                        ],
-                        'end' => [
-                            'line'   => 15,
-                            'column' => 80,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'get',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'profile',
-                        'start' => [
-                            'line'   => 15,
-                            'column' => 15,
-                        ],
-                        'end' => [
-                            'line'   => 15,
-                            'column' => 22,
-                        ],
-                    ],
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'unknown',
-                                    'value' => 'ProfileController::class',
-                                ],
-                            ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'string',
-                                    'value' => 'edit',
-                                    'start' => [
-                                        'line'   => 15,
-                                        'column' => 53,
-                                    ],
-                                    'end' => [
-                                        'line'   => 15,
-                                        'column' => 57,
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'group',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'      => 'closure',
-                        'arguments' => [],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'middleware',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'string',
-                                    'value' => 'auth',
-                                    'start' => [
-                                        'line'   => 19,
-                                        'column' => 4,
-                                    ],
-                                    'end' => [
-                                        'line'   => 19,
-                                        'column' => 8,
-                                    ],
-                                ],
-                            ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'string',
-                                    'value' => 'verified',
-                                    'start' => [
-                                        'line'   => 20,
-                                        'column' => 4,
-                                    ],
-                                    'end' => [
-                                        'line'   => 20,
+                                        'line'   => 4,
                                         'column' => 12,
                                     ],
                                 ],
                             ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
+                        ],
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'     => 'array',
+                                    'children' => [
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'       => 'methodCall',
+                                                'methodName' => null,
+                                                'className'  => 'HomeController',
+                                                'arguments'  => [
+                                                    'type'                => 'arguments',
+                                                    'autocompletingIndex' => 0,
+                                                    'children'            => [],
+                                                ],
+                                                'children' => [],
+                                            ],
+                                        ],
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'show',
+                                                'start' => [
+                                                    'line'   => 4,
+                                                    'column' => 40,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 4,
+                                                    'column' => 44,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
                                 ],
-                                'value' => [
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'group',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'       => 'closure',
+                                    'parameters' => [],
+                                    'children'   => [],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'middleware',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
                                     'type'  => 'string',
-                                    'value' => 'within-current-organization',
+                                    'value' => 'signed',
                                     'start' => [
-                                        'line'   => 21,
-                                        'column' => 4,
+                                        'line'   => 6,
+                                        'column' => 18,
                                     ],
                                     'end' => [
-                                        'line'   => 21,
+                                        'line'   => 6,
+                                        'column' => 24,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'name',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'  => 'string',
+                                    'value' => 'profile.edit',
+                                    'start' => [
+                                        'line'   => 7,
+                                        'column' => 68,
+                                    ],
+                                    'end' => [
+                                        'line'   => 7,
+                                        'column' => 80,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'get',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 2,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'  => 'string',
+                                    'value' => 'profile',
+                                    'start' => [
+                                        'line'   => 7,
+                                        'column' => 15,
+                                    ],
+                                    'end' => [
+                                        'line'   => 7,
+                                        'column' => 22,
+                                    ],
+                                ],
+                            ],
+                        ],
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'     => 'array',
+                                    'children' => [
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'       => 'methodCall',
+                                                'methodName' => null,
+                                                'className'  => 'ProfileController',
+                                                'arguments'  => [
+                                                    'type'                => 'arguments',
+                                                    'autocompletingIndex' => 0,
+                                                    'children'            => [],
+                                                ],
+                                                'children' => [],
+                                            ],
+                                        ],
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'edit',
+                                                'start' => [
+                                                    'line'   => 7,
+                                                    'column' => 53,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 7,
+                                                    'column' => 57,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'group',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'       => 'closure',
+                                    'parameters' => [],
+                                    'children'   => [],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'middleware',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'     => 'array',
+                                    'children' => [
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'auth',
+                                                'start' => [
+                                                    'line'   => 10,
+                                                    'column' => 19,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 10,
+                                                    'column' => 23,
+                                                ],
+                                            ],
+                                        ],
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'verified',
+                                                'start' => [
+                                                    'line'   => 10,
+                                                    'column' => 27,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 10,
+                                                    'column' => 35,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'name',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'  => 'string',
+                                    'value' => 'dashboard',
+                                    'start' => [
+                                        'line'   => 11,
+                                        'column' => 72,
+                                    ],
+                                    'end' => [
+                                        'line'   => 11,
+                                        'column' => 81,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'get',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 2,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'  => 'string',
+                                    'value' => 'dashboard',
+                                    'start' => [
+                                        'line'   => 11,
+                                        'column' => 15,
+                                    ],
+                                    'end' => [
+                                        'line'   => 11,
+                                        'column' => 24,
+                                    ],
+                                ],
+                            ],
+                        ],
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'     => 'array',
+                                    'children' => [
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'       => 'methodCall',
+                                                'methodName' => null,
+                                                'className'  => 'DashboardController',
+                                                'arguments'  => [
+                                                    'type'                => 'arguments',
+                                                    'autocompletingIndex' => 0,
+                                                    'children'            => [],
+                                                ],
+                                                'children' => [],
+                                            ],
+                                        ],
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'show',
+                                                'start' => [
+                                                    'line'   => 11,
+                                                    'column' => 57,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 11,
+                                                    'column' => 61,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'name',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'  => 'string',
+                                    'value' => 'gitlab.webhook.store',
+                                    'start' => [
+                                        'line'   => 17,
+                                        'column' => 11,
+                                    ],
+                                    'end' => [
+                                        'line'   => 17,
                                         'column' => 31,
                                     ],
                                 ],
@@ -359,103 +477,97 @@ test('extract functions and string params', function () {
                 ],
             ],
             [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'dashboard',
-                        'start' => [
-                            'line'   => 23,
-                            'column' => 72,
-                        ],
-                        'end' => [
-                            'line'   => 23,
-                            'column' => 81,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'get',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'dashboard',
-                        'start' => [
-                            'line'   => 23,
-                            'column' => 15,
-                        ],
-                        'end' => [
-                            'line'   => 23,
-                            'column' => 81,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'dashboard',
-                        'start' => [
-                            'line'   => 23,
-                            'column' => 72,
-                        ],
-                        'end' => [
-                            'line'   => 23,
-                            'column' => 81,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'get',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'dashboard',
-                        'start' => [
-                            'line'   => 23,
-                            'column' => 15,
-                        ],
-                        'end' => [
-                            'line'   => 23,
-                            'column' => 81,
-                        ],
-                    ],
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'unknown',
-                                    'value' => 'DashboardController::class',
+                'type'       => 'methodCall',
+                'methodName' => 'middleware',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'       => 'methodCall',
+                                    'methodName' => null,
+                                    'className'  => 'VerifyGitLabWebhookRequest',
+                                    'arguments'  => [
+                                        'type'                => 'arguments',
+                                        'autocompletingIndex' => 0,
+                                        'children'            => [],
+                                    ],
+                                    'children' => [],
                                 ],
                             ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'type'       => 'methodCall',
+                'methodName' => 'post',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 2,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
                                     'type'  => 'string',
-                                    'value' => 'show',
+                                    'value' => 'gitlab/webhook',
                                     'start' => [
-                                        'line'   => 23,
-                                        'column' => 57,
+                                        'line'   => 15,
+                                        'column' => 11,
                                     ],
                                     'end' => [
-                                        'line'   => 23,
-                                        'column' => 61,
+                                        'line'   => 15,
+                                        'column' => 25,
+                                    ],
+                                ],
+                            ],
+                        ],
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
+                                    'type'     => 'array',
+                                    'children' => [
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'       => 'methodCall',
+                                                'methodName' => null,
+                                                'className'  => 'GitLabWebhookController',
+                                                'arguments'  => [
+                                                    'type'                => 'arguments',
+                                                    'autocompletingIndex' => 0,
+                                                    'children'            => [],
+                                                ],
+                                                'children' => [],
+                                            ],
+                                        ],
+                                        [
+                                            'type'  => 'array_item',
+                                            'key'   => null,
+                                            'value' => [
+                                                'type'  => 'string',
+                                                'value' => 'store',
+                                                'start' => [
+                                                    'line'   => 15,
+                                                    'column' => 62,
+                                                ],
+                                                'end' => [
+                                                    'line'   => 15,
+                                                    'column' => 67,
+                                                ],
+                                            ],
+                                        ],
                                     ],
                                 ],
                             ],
@@ -464,95 +576,27 @@ test('extract functions and string params', function () {
                 ],
             ],
             [
-                'method' => 'name',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'gitlab.webhook.store',
-                        'start' => [
-                            'line'   => 30,
-                            'column' => 11,
-                        ],
-                        'end' => [
-                            'line'   => 30,
-                            'column' => 31,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'middleware',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'unknown',
-                        'value' => 'VerifyGitLabWebhookRequest::class',
-                    ],
-                ],
-            ],
-            [
-                'method' => 'withoutMiddleware',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'web',
-                        'start' => [
-                            'line'   => 28,
-                            'column' => 24,
-                        ],
-                        'end' => [
-                            'line'   => 28,
-                            'column' => 27,
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'method' => 'post',
-                'class'  => 'Illuminate\\Support\\Facades\\Route',
-                'params' => [
-                    [
-                        'type'  => 'string',
-                        'value' => 'gitlab/webhook',
-                        'start' => [
-                            'line'   => 27,
-                            'column' => 12,
-                        ],
-                        'end' => [
-                            'line'   => 27,
-                            'column' => 26,
-                        ],
-                    ],
-                    [
-                        'type'  => 'array',
-                        'value' => [
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
-                                    'type'  => 'unknown',
-                                    'value' => 'GitLabWebhookController::class',
-                                ],
-                            ],
-                            [
-                                'key' => [
-                                    'type'  => 'null',
-                                    'value' => null,
-                                ],
-                                'value' => [
+                'type'       => 'methodCall',
+                'methodName' => 'withoutMiddleware',
+                'className'  => 'Illuminate\\Support\\Facades\\Route',
+                'arguments'  => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 1,
+                    'children'            => [
+                        [
+                            'type'     => 'argument',
+                            'name'     => null,
+                            'children' => [
+                                [
                                     'type'  => 'string',
-                                    'value' => 'store',
+                                    'value' => 'web',
                                     'start' => [
-                                        'line'   => 27,
-                                        'column' => 63,
+                                        'line'   => 14,
+                                        'column' => 25,
                                     ],
                                     'end' => [
-                                        'line'   => 27,
-                                        'column' => 68,
+                                        'line'   => 14,
+                                        'column' => 28,
                                     ],
                                 ],
                             ],
@@ -560,7 +604,6 @@ test('extract functions and string params', function () {
                     ],
                 ],
             ],
-        ],
-
-    ]));
+        ]
+    ));
 });
