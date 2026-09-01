@@ -31,6 +31,7 @@ use App\Lsp\Methods\TextDocumentCompletion;
 use App\Lsp\Methods\TextDocumentDefinition;
 use App\Lsp\Methods\TextDocumentDocumentLink;
 use App\Lsp\Methods\TextDocumentHover;
+use App\Lsp\Methods\TextDocumentReferences;
 use App\Lsp\Transport\AmpStdioTransport;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
@@ -58,6 +59,7 @@ final class Server
         'textDocument/definition'   => TextDocumentDefinition::class,
         'textDocument/documentLink' => TextDocumentDocumentLink::class,
         'textDocument/hover'        => TextDocumentHover::class,
+        'textDocument/references'   => TextDocumentReferences::class,
     ];
 
     /**

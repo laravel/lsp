@@ -10,6 +10,7 @@ use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\DetectedArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
+use App\Lsp\Support\Position;
 use Illuminate\Support\Collection;
 
 abstract class DocumentMapper
@@ -95,6 +96,44 @@ abstract class DocumentMapper
     {
         return $this->arguments($document)
             ->first(fn (DetectedArgument $argument): bool => $argument->containsPosition($position));
+    }
+
+    /**
+     * Get the symbol at the given position.
+     *
+     * @param  array<string, mixed>  $position
+     */
+    public function symbolAt(Document $document, array $position): ?string
+    {
+        foreach ($this->arguments($document) as $argument) {
+            foreach ($argument->stringValues() as $value) {
+                if (Position::inRange($value['range'], $position)) {
+                    return $value['value'];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the ranges of every detected string matching the given symbol.
+     *
+     * @return array<int, array<string, array<string, int>>>
+     */
+    public function rangesFor(Document $document, string $symbol): array
+    {
+        $ranges = [];
+
+        foreach ($this->arguments($document) as $argument) {
+            foreach ($argument->stringValues() as $value) {
+                if ($value['value'] === $symbol) {
+                    $ranges[] = $value['range'];
+                }
+            }
+        }
+
+        return $ranges;
     }
 
     /**
