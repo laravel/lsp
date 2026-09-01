@@ -25,6 +25,13 @@ class Document
     protected array $autocomplete = [];
 
     /**
+     * The cached document lines.
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $lines = null;
+
+    /**
      * Create a new document instance.
      */
     public function __construct(
@@ -63,6 +70,24 @@ class Document
     }
 
     /**
+     * Get the document lines.
+     *
+     * @return array<int, string>
+     */
+    public function lines(): array
+    {
+        return $this->lines ??= explode("\n", $this->content);
+    }
+
+    /**
+     * Get a single document line.
+     */
+    public function line(int $line): string
+    {
+        return $this->lines()[$line] ?? '';
+    }
+
+    /**
      * Get document text inside the given LSP range.
      *
      * @param  array<string, mixed>  $range
@@ -90,7 +115,7 @@ class Document
         }
 
         return substr(
-            explode("\n", $this->content)[$line] ?? '',
+            $this->line($line),
             $character,
             $endCharacter - $character,
         );
@@ -110,10 +135,8 @@ class Document
             return $this->content;
         }
 
-        $lines = explode("\n", $this->content);
-        $before = array_slice($lines, 0, $line);
-        $current = $lines[$line] ?? '';
-        $before[] = substr($current, 0, $character);
+        $before = array_slice($this->lines(), 0, $line);
+        $before[] = substr($this->line($line), 0, $character);
 
         return implode("\n", $before);
     }

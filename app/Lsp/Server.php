@@ -31,6 +31,8 @@ use App\Lsp\Methods\TextDocumentCompletion;
 use App\Lsp\Methods\TextDocumentDefinition;
 use App\Lsp\Methods\TextDocumentDocumentLink;
 use App\Lsp\Methods\TextDocumentHover;
+use App\Lsp\Support\PositionEncoding;
+use App\Lsp\Support\PositionTranslator;
 use App\Lsp\Transport\AmpStdioTransport;
 use App\Lsp\Transport\JsonRpcRequest;
 use App\Lsp\Transport\JsonRpcResponse;
@@ -148,7 +150,7 @@ final class Server
             return;
         }
 
-        $this->transport->dispatch($request, $this->dispatch(...));
+        $this->transport->dispatch($this->decodePositions($request), $this->dispatch(...));
     }
 
     /**
@@ -164,17 +166,11 @@ final class Server
      */
     public function send(string $method, ?array $params = null)
     {
-        $data = [
+        $this->emit([
             'jsonrpc' => '2.0',
             'id'      => $this->lastRequestId++,
             'method'  => $method,
-        ];
-
-        if (!is_null($params)) {
-            $data['params'] = $params;
-        }
-
-        $this->transport->send(json_encode($data));
+        ], $params);
     }
 
     /**
@@ -182,16 +178,58 @@ final class Server
      */
     public function notify(string $method, ?array $params = null)
     {
-        $data = [
+        $this->emit([
             'jsonrpc' => '2.0',
             'method'  => $method,
-        ];
+        ], $params);
+    }
 
+    /**
+     * Send a server-initiated message, converting the positions it carries.
+     *
+     * Responses go out through respond(), which encodes against the document
+     * resolved from the request being answered. A server-initiated message has
+     * no such request, so the translator resolves the document per payload.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>|null  $params
+     */
+    protected function emit(array $data, ?array $params): void
+    {
         if (!is_null($params)) {
-            $data['params'] = $params;
+            $data['params'] = $this->positions()->toClient($params);
         }
 
         $this->transport->send(json_encode($data));
+    }
+
+    /**
+     * Convert the positions in an incoming request to byte offsets.
+     */
+    protected function decodePositions(JsonRpcRequest $request): JsonRpcRequest
+    {
+        return $request->withParams($this->positions()->fromClient($request->all()));
+    }
+
+    /**
+     * Convert the positions in an outgoing response to the wire encoding.
+     */
+    protected function encodePositions(JsonRpcResponse $response, JsonRpcRequest $request): JsonRpcResponse
+    {
+        $translator = $this->positions();
+        $document = $translator->documentFor($request->all());
+
+        return $response->mapResult(fn (mixed $result): mixed => is_array($result)
+            ? $translator->toClient($result, $document)
+            : $result);
+    }
+
+    /**
+     * Get a position translator for the negotiated encoding.
+     */
+    protected function positions(): PositionTranslator
+    {
+        return $this->container->make(PositionTranslator::class);
     }
 
     /**
@@ -251,7 +289,7 @@ final class Server
      */
     public function dispatchRequest(JsonRpcRequest $request): void
     {
-        $this->respond($this->handleRequest($request));
+        $this->respond($this->encodePositions($this->handleRequest($request), $request));
     }
 
     /**
@@ -345,6 +383,7 @@ final class Server
         $this->container->instance(LoggerInterface::class, $this->logger);
 
         $this->container->singletonIf(DocumentManager::class);
+        $this->container->instance(PositionEncoding::class, PositionEncoding::Utf16);
         $this->container->singletonIf(ExceptionHandler::class, Handler::class);
 
         $this->container->singletonIf(Project::class, fn () => throw new ServerNotInitializedException);

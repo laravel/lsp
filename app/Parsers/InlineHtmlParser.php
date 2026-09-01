@@ -38,11 +38,17 @@ class InlineHtmlParser extends AbstractParser
      * Stillat\BladeParser\Document\Document::fromText treats multibyte characters
      * as indentations and spaces resulting in a miscalculated Node position.
      *
-     * This function replaces the multibyte characters with a single, placeholder character
+     * This function replaces each multibyte character with as many placeholder
+     * characters as it occupies bytes, so Blade node positions stay UTF-8 byte
+     * offsets and line up with the byte offsets the PHP parser reports.
      */
     private function replaceMultibyteChars(string $text, string $placeholder = '*'): string
     {
-        return preg_replace('/[^\x00-\x7F]/u', $placeholder, $text);
+        return preg_replace_callback(
+            '/[^\x00-\x7F]/u',
+            fn (array $matches): string => str_repeat($placeholder, strlen($matches[0])),
+            $text,
+        ) ?? $text;
     }
 
     public function parse(InlineHtml $node)
