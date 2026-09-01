@@ -15,6 +15,11 @@ class ScriptRunner
     protected const SUPPRESSED_ERROR_TYPES = 'E_WARNING | E_CORE_WARNING | E_COMPILE_WARNING | E_USER_WARNING | E_DEPRECATED | E_USER_DEPRECATED';
 
     /**
+     * Whether the project can be bootstrapped without artisan.
+     */
+    protected ?bool $bootable = null;
+
+    /**
      * Create a new PHP runner instance.
      *
      * @param  array<int, string>  $command
@@ -51,15 +56,7 @@ class ScriptRunner
         }
 
         try {
-            $process = new Process([
-                ...$this->command,
-                '-d',
-                'error_reporting=E_ALL & ~(' . self::SUPPRESSED_ERROR_TYPES . ')',
-                'artisan',
-                'tinker',
-                '--execute',
-                'require ' . var_export($script, true) . ';',
-            ], $this->path, timeout: null);
+            $process = new Process($this->arguments($script), $this->path, timeout: null);
 
             $process->run();
 
@@ -85,6 +82,54 @@ class ScriptRunner
     }
 
     /**
+     * Get the process arguments used to run the given script.
+     *
+     * @return array<int, string>
+     */
+    protected function arguments(string $script): array
+    {
+        $arguments = [
+            ...$this->command,
+            '-d',
+            'error_reporting=E_ALL & ~(' . self::SUPPRESSED_ERROR_TYPES . ')',
+        ];
+
+        return $this->bootable()
+            ? [...$arguments, $script]
+            : [...$arguments, 'artisan', 'tinker', '--execute', 'require ' . var_export($script, true) . ';'];
+    }
+
+    /**
+     * Determine if the project can be bootstrapped without artisan.
+     */
+    protected function bootable(): bool
+    {
+        return $this->bootable ??= is_file($this->path . '/vendor/autoload.php')
+            && is_file($this->path . '/bootstrap/app.php');
+    }
+
+    /**
+     * Get the lines that bootstrap the application inside the script.
+     *
+     * @return array<int, string>
+     */
+    protected function bootstrap(): array
+    {
+        if (!$this->bootable()) {
+            return [];
+        }
+
+        $path = realpath($this->path) ?: $this->path;
+
+        return [
+            "define('LARAVEL_START', microtime(true));",
+            'require ' . var_export($path . '/vendor/autoload.php', true) . ';',
+            '$app = require ' . var_export($path . '/bootstrap/app.php', true) . ';',
+            '$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();',
+        ];
+    }
+
+    /**
      * Write the script to a file inside the project.
      */
     protected function write(string $code): ?string
@@ -107,6 +152,7 @@ class ScriptRunner
     {
         return implode(PHP_EOL, [
             '<?php',
+            ...$this->bootstrap(),
             'error_reporting(error_reporting() & ~(' . self::SUPPRESSED_ERROR_TYPES . '));',
             $this->normalize(file_get_contents(__DIR__ . '/Data/Templates/global.php') ?: ''),
             $this->normalize($code),
