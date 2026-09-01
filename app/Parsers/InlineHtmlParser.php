@@ -6,6 +6,7 @@ use App\Contexts\AbstractContext;
 use App\Contexts\Blade;
 use App\Parser\Parse;
 use App\Parser\Settings;
+use Illuminate\Support\Str;
 use Microsoft\PhpParser\Node\Statement\InlineHtml;
 use Microsoft\PhpParser\Parser;
 use Microsoft\PhpParser\PositionUtilities;
@@ -19,6 +20,9 @@ use Stillat\BladeParser\Nodes\LiteralNode;
 
 class InlineHtmlParser extends AbstractParser
 {
+    /** @var string[] */
+    protected array $openQuoteStrings = ["('", '("'];
+
     protected $echoStrings = [
         '{!!' => '!!}',
         '{{{' => '}}}',
@@ -137,13 +141,19 @@ class InlineHtmlParser extends AbstractParser
 
     protected function parseBladeDirective(DirectiveNode $node)
     {
-        if ($node->isClosingDirective || !$node->hasArguments()) {
+        if (!$this->shouldParseDirective($node)) {
             return;
+        }
+
+        $content = $node->toString();
+
+        if ($this->isDirectiveWithOpenQuote($node)) {
+            $content .= $node->getNextNode()?->toString() ?? '';
         }
 
         $methodUsed = '@' . $node->content;
         $safetyPrefix = 'directive';
-        $snippet = "<?php\n" . str_repeat(' ', $node->getStartIndentationLevel()) . str_replace($methodUsed, $safetyPrefix . $node->content, $node->toString() . ';');
+        $snippet = "<?php\n" . str_repeat(' ', $node->getStartIndentationLevel()) . str_replace($methodUsed, $safetyPrefix . $node->content, $content . ';');
 
         $sourceFile = (new Parser)->parseSourceFile($snippet);
 
@@ -161,6 +171,10 @@ class InlineHtmlParser extends AbstractParser
 
         $result = Parse::parse($sourceFile);
 
+        if (count($result->children) === 0) {
+            return;
+        }
+
         $child = $result->children[0];
 
         $child->methodName = '@' . substr($child->methodName, mb_strlen($safetyPrefix));
@@ -177,5 +191,20 @@ class InlineHtmlParser extends AbstractParser
         };
 
         $this->doEchoParse($node, $prefix, $node->innerContent);
+    }
+
+    protected function isDirectiveWithOpenQuote(DirectiveNode $node): bool
+    {
+        return Str::startsWith(
+            $node->getNextNode()?->toString() ?? '',
+            $this->openQuoteStrings
+        );
+    }
+
+    protected function shouldParseDirective(DirectiveNode $node): bool
+    {
+        return !$node->isClosingDirective
+            || $node->hasArguments()
+            || $this->isDirectiveWithOpenQuote($node);
     }
 }
