@@ -10,8 +10,8 @@ use App\Lsp\Detection\DetectedArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Support\Position;
 use App\Lsp\Project;
+use App\Lsp\Support\Position;
 use Illuminate\Support\Collection;
 
 class MiddlewareDocumentMapper extends DocumentMapper
@@ -118,7 +118,7 @@ class MiddlewareDocumentMapper extends DocumentMapper
      */
     protected function toDiagnostics(DetectedArgument $argument): array
     {
-        return collect($argument->stringValues())
+        return collect($argument->literalStringValues())
             ->reject(fn (array $value): bool => $this->find($this->name($value['value'])) !== null)
             ->map(fn (array $value): array => [
                 'range'    => $value['range'],
