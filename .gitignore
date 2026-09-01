@@ -10,7 +10,6 @@
 todo.md
 .env
 /storage/local-results
-/tests/snippets
 /storage/new-parsed
 storage/tree.txt
 /storage/logs
