@@ -132,6 +132,7 @@ abstract class DocumentMapper
     public function diagnostics(Document $document): array
     {
         return $this->arguments($document)
+            ->reject(fn (DetectedArgument $argument): bool => $argument->isInterpolated())
             ->flatMap(fn (DetectedArgument $argument): array => $this->toDiagnostics($argument))
             ->values()
             ->all();
