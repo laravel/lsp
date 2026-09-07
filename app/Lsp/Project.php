@@ -31,6 +31,36 @@ final class Project
     }
 
     /**
+     * Get the configured LSP process memory limit.
+     */
+    public function memoryLimit(): string
+    {
+        $value = $this->data('memoryLimit', '512M');
+
+        if (!is_string($value) && !is_int($value)) {
+            return '512M';
+        }
+
+        $limit = trim((string) $value);
+
+        return preg_match('/^(-1|\d+[KMG]?)$/i', $limit) === 1
+            ? $limit
+            : '512M';
+    }
+
+    /**
+     * Apply the configured memory limit to the current process.
+     */
+    public function applyMemoryLimit(): string
+    {
+        $limit = $this->memoryLimit();
+
+        ini_set('memory_limit', $limit);
+
+        return $limit;
+    }
+
+    /**
      * Get the file URI to the workspace root.
      */
     public function uri(): FileUri
