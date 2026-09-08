@@ -170,7 +170,7 @@ class BladeDirectiveCompletionProvider implements CompletionProvider
             '@includeUnless(...)'            => '@includeUnless(${1}, ${2})',
             '@includeFirst(...)'             => '@includeFirst(${1})',
             '@includeIsolated(...)'          => '@includeIsolated(${1})',
-            '@each(...)'                     => '@each(${1}, ${2}, ${3})',
+            '@each(...)'                     => '@each(${1}, ${2}, ${3}, ${4})',
             '@once'                          => ['@once', "\t" . '${1}', '@endonce'],
             '@yield(...)'                    => '@yield(${1})',
             '@slot(...)'                     => '@slot(${1})',
