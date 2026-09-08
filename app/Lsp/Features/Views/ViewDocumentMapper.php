@@ -38,9 +38,10 @@ class ViewDocumentMapper extends DocumentMapper
             Pattern::method(method: ['view', 'livewire'], class: Pattern::facade('Route'), argument: 1),
             Pattern::method(method: ['markdown', 'view'], class: 'Illuminate\\Notifications\\Messages\\MailMessage', argument: 0),
             Pattern::attribute(class: 'Illuminate\\Mail\\Mailables\\Content', argument: [0, 3]),
-            Pattern::method(method: ['@component', '@each', '@extends', '@include', '@includeIf', 'assertViewIs', 'links', 'markdown', 'view'], argument: 0),
+            Pattern::method(method: ['@component', '@extends', '@include', '@includeIf', '@includeIsolated', 'assertViewIs', 'links', 'markdown', 'view'], argument: 0),
             Pattern::method(method: ['@includeWhen', '@includeUnless'], argument: 1),
             Pattern::method(method: '@includeFirst', argument: 0),
+            Pattern::method(method: '@each', argument: [0, 3]),
         ];
     }
 
@@ -118,7 +119,20 @@ class ViewDocumentMapper extends DocumentMapper
      */
     protected function toDiagnostics(DetectedArgument $argument): array
     {
-        return collect($argument->literalStringValues())
+        $values = collect($argument->literalStringValues());
+        $method = $argument->item()['methodName'] ?? null;
+
+        if ($method === '@includeIf') {
+            return [];
+        }
+
+        if ($method === '@includeFirst' && $values->contains(
+            fn (array $value): bool => $this->find($value['value']) !== null
+        )) {
+            return [];
+        }
+
+        return $values
             ->reject(fn (array $value): bool => $this->find($value['value']) !== null)
             ->map(fn (array $value): array => [
                 'range'    => $value['range'],

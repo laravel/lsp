@@ -23,6 +23,8 @@ function viewMapper(): ViewDocumentMapper
                 ['key' => 'partials.first', 'path' => 'resources/views/partials/first.blade.php'],
                 ['key' => 'partials.if', 'path' => 'resources/views/partials/if.blade.php'],
                 ['key' => 'partials.item', 'path' => 'resources/views/partials/item.blade.php'],
+                ['key' => 'partials.empty', 'path' => 'resources/views/partials/empty.blade.php'],
+                ['key' => 'partials.isolated', 'path' => 'resources/views/partials/isolated.blade.php'],
                 ['key' => 'partials.unless', 'path' => 'resources/views/partials/unless.blade.php'],
                 ['key' => 'partials.when', 'path' => 'resources/views/partials/when.blade.php'],
             ]);
@@ -47,31 +49,27 @@ test('links all Blade directives that reference views', function () {
 @includeWhen($condition, 'partials.when')
 @includeUnless($condition, 'partials.unless')
 @includeFirst(['partials.first', 'partials.default'])
-@each('partials.item', $items, 'item')
+@includeIsolated('partials.isolated')
+@each('partials.item', $items, 'item', 'partials.empty')
 BLADE);
 
     $links = $mapper->links($document);
 
-    expect($links)->toHaveCount(9);
+    expect($links)->toHaveCount(11);
     expect(array_map(fn (array $link): string => (string) $link['target'], $links))
         ->each->toStartWith('file:///project/resources/views/');
 });
 
-test('reports missing views in includeFirst', function () {
+test('does not report optional include views as missing', function () {
     $mapper = viewMapper();
     $document = new Document(
         'file:///project/resources/views/page.blade.php',
         "@includeFirst(['partials.first', 'partials.missing'])",
     );
 
-    expect($mapper->diagnostics($document))->toBe([[
-        'range'    => [
-            'start' => ['line' => 0, 'character' => 34],
-            'end'   => ['line' => 0, 'character' => 50],
-        ],
-        'severity' => 2,
-        'source'   => 'Laravel Extension',
-        'code'     => 'view',
-        'message'  => 'View [partials.missing] not found.',
-    ]]);
+    expect($mapper->diagnostics($document))->toBeEmpty()
+        ->and($mapper->diagnostics(new Document(
+            'file:///project/resources/views/page.blade.php',
+            "@includeIf('partials.missing')",
+        )))->toBeEmpty();
 });
