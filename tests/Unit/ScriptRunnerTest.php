@@ -1,6 +1,7 @@
 <?php
 
 use App\Lsp\ScriptRunner;
+use Symfony\Component\Process\Process;
 
 function scriptRunnerProject(string $suffix): string
 {
@@ -8,8 +9,24 @@ function scriptRunnerProject(string $suffix): string
 
     @mkdir($root . '/vendor', 0777, true);
     @mkdir($root . '/bootstrap', 0777, true);
-    touch($root . '/vendor/autoload.php');
-    touch($root . '/bootstrap/app.php');
+    file_put_contents($root . '/vendor/autoload.php', '<?php define("SCRIPT_RUNNER_PROJECT", dirname(__DIR__));');
+    file_put_contents($root . '/bootstrap/app.php', <<<'PHP'
+    <?php
+
+    return new class
+    {
+        public function make(string $abstract): object
+        {
+            return new class
+            {
+                public function bootstrap(): void
+                {
+                    define('SCRIPT_RUNNER_BOOTED', true);
+                }
+            };
+        }
+    };
+    PHP);
 
     return $root;
 }
@@ -63,32 +80,42 @@ test('the bootstrap targets the project root even when storage is a symlink', fu
     }
 
     try {
-        $base = realpath($root);
-
-        expect(scriptRunnerFor($root)->generate('<?php //'))
-            ->toContain("require '" . $base . "/vendor/autoload.php';")
-            ->toContain("require '" . $base . "/bootstrap/app.php';");
+        expect(scriptRunnerFor($root)->json('echo json_encode([SCRIPT_RUNNER_PROJECT, SCRIPT_RUNNER_BOOTED]);'))
+            ->toBe([realpath($root), true]);
     } finally {
         scriptRunnerCleanup($root, $shared);
     }
 });
 
-test('the bootstrap escapes a project path containing a quote', function () {
+test('the bootstrap supports a project path containing a quote', function () {
     $root = scriptRunnerProject("it's");
 
     try {
-        $generated = scriptRunnerFor($root)->generate('<?php //');
-
-        expect($generated)->toContain(var_export(realpath($root) . '/vendor/autoload.php', true));
-
-        $script = sys_get_temp_dir() . '/lsp-lint-' . getmypid() . '.php';
-        file_put_contents($script, $generated);
-        exec('php -l ' . escapeshellarg($script) . ' 2>&1', $output, $status);
-        @unlink($script);
-
-        expect($status)->toBe(0);
+        expect(scriptRunnerFor($root)->json('echo json_encode([SCRIPT_RUNNER_PROJECT, SCRIPT_RUNNER_BOOTED]);'))
+            ->toBe([realpath($root), true]);
     } finally {
         scriptRunnerCleanup($root);
+    }
+});
+
+test('the bootstrap resolves the project inside the PHP environment', function () {
+    $host = scriptRunnerProject('host');
+    $runtime = scriptRunnerProject('runtime');
+
+    try {
+        mkdir($runtime . '/storage/framework', 0777, true);
+
+        $script = 'storage/framework/lsp.php';
+        file_put_contents($runtime . '/' . $script, scriptRunnerFor($host)->generate(
+            'echo json_encode([SCRIPT_RUNNER_PROJECT, SCRIPT_RUNNER_BOOTED]);'
+        ));
+
+        $process = new Process([PHP_BINARY, $script], $runtime);
+        $process->mustRun();
+
+        expect(json_decode($process->getOutput(), true))->toBe([realpath($runtime), true]);
+    } finally {
+        scriptRunnerCleanup($host, $runtime);
     }
 });
 

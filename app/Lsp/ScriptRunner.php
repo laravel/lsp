@@ -119,12 +119,10 @@ class ScriptRunner
             return [];
         }
 
-        $path = realpath($this->path) ?: $this->path;
-
         return [
             "define('LARAVEL_START', microtime(true));",
-            'require ' . var_export($path . '/vendor/autoload.php', true) . ';',
-            '$app = require ' . var_export($path . '/bootstrap/app.php', true) . ';',
+            "require getcwd() . '/vendor/autoload.php';",
+            "\$app = require getcwd() . '/bootstrap/app.php';",
             '$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();',
         ];
     }
