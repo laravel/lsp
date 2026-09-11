@@ -6,9 +6,12 @@ namespace App\Lsp\Features\Views;
 
 use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
+use App\Lsp\Detection\DetectedArguments;
 use App\Lsp\Detection\Pattern;
+use App\Lsp\Document;
 use App\Lsp\Features\Support\DocumentMapper;
 use App\Lsp\Project;
+use App\Lsp\Support\Position;
 use Illuminate\Support\Collection;
 
 class ViewDocumentMapper extends DocumentMapper
@@ -35,8 +38,27 @@ class ViewDocumentMapper extends DocumentMapper
             Pattern::method(method: ['view', 'livewire'], class: Pattern::facade('Route'), argument: 1),
             Pattern::method(method: ['markdown', 'view'], class: 'Illuminate\\Notifications\\Messages\\MailMessage', argument: 0),
             Pattern::attribute(class: 'Illuminate\\Mail\\Mailables\\Content', argument: [0, 3]),
-            Pattern::method(method: ['@each', '@extends', '@include', 'assertViewIs', 'links', 'markdown', 'view'], argument: 0),
+            Pattern::method(method: ['@component', '@extends', '@include', '@includeIf', '@includeIsolated', 'assertViewIs', 'links', 'markdown', 'view'], argument: 0),
+            Pattern::method(method: ['@includeWhen', '@includeUnless'], argument: 1),
+            Pattern::method(method: '@includeFirst', argument: 0),
+            Pattern::method(method: '@each', argument: [0, 3]),
         ];
+    }
+
+    /**
+     * Get matched view arguments from the document.
+     *
+     * @return Collection<int, DetectedArgument>
+     */
+    public function arguments(Document $document): Collection
+    {
+        return DetectedArguments::in($document)
+            ->matching($this->patterns())
+            ->stringsAndArrays()
+            ->filter(fn (DetectedArgument $argument): bool => $argument->param()['type'] === 'string'
+                || ($argument->item()['methodName'] ?? null) === '@includeFirst')
+            ->filter(fn (DetectedArgument $argument): bool => $this->shouldAccept($argument))
+            ->values();
     }
 
     /**
@@ -46,11 +68,17 @@ class ViewDocumentMapper extends DocumentMapper
      */
     protected function toLinks(DetectedArgument $argument): array
     {
-        $view = $this->find($argument);
+        $links = [];
 
-        return $view !== null && is_string($view['path'] ?? null)
-            ? [$this->project->link($argument->range(), $view['path'])]
-            : [];
+        foreach ($argument->stringValues() as $value) {
+            $view = $this->find($value['value']);
+
+            if ($view !== null && is_string($view['path'] ?? null)) {
+                $links[] = $this->project->link($value['range'], $view['path']);
+            }
+        }
+
+        return $links;
     }
 
     /**
@@ -61,19 +89,27 @@ class ViewDocumentMapper extends DocumentMapper
      */
     protected function toHover(DetectedArgument $argument, array $position): ?array
     {
-        $view = $this->find($argument);
+        foreach ($argument->stringValues() as $value) {
+            if (!Position::inRange($value['range'], $position)) {
+                continue;
+            }
 
-        if ($view === null || !is_string($view['path'] ?? null)) {
-            return null;
+            $view = $this->find($value['value']);
+
+            if ($view === null || !is_string($view['path'] ?? null)) {
+                continue;
+            }
+
+            return [
+                'range'    => $value['range'],
+                'contents' => [
+                    'kind'  => 'markdown',
+                    'value' => "[{$view['path']}]({$this->project->target($view['path'])})",
+                ],
+            ];
         }
 
-        return [
-            'range'    => $argument->range(),
-            'contents' => [
-                'kind'  => 'markdown',
-                'value' => "[{$view['path']}]({$this->project->target($view['path'])})",
-            ],
-        ];
+        return null;
     }
 
     /**
@@ -83,19 +119,30 @@ class ViewDocumentMapper extends DocumentMapper
      */
     protected function toDiagnostics(DetectedArgument $argument): array
     {
-        $value = $argument->stringValue();
+        $values = collect($argument->literalStringValues());
+        $method = $argument->item()['methodName'] ?? null;
 
-        if ($value === null || $this->find($argument) !== null) {
+        if ($method === '@includeIf') {
             return [];
         }
 
-        return [[
-            'range'    => $argument->range(),
-            'severity' => 2,
-            'source'   => 'Laravel Extension',
-            'code'     => 'view',
-            'message'  => "View [{$value}] not found.",
-        ]];
+        if ($method === '@includeFirst' && $values->contains(
+            fn (array $value): bool => $this->find($value['value']) !== null
+        )) {
+            return [];
+        }
+
+        return $values
+            ->reject(fn (array $value): bool => $this->find($value['value']) !== null)
+            ->map(fn (array $value): array => [
+                'range'    => $value['range'],
+                'severity' => 2,
+                'source'   => 'Laravel Extension',
+                'code'     => 'view',
+                'message'  => "View [{$value['value']}] not found.",
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -127,14 +174,8 @@ class ViewDocumentMapper extends DocumentMapper
      *
      * @return array<string, mixed>|null
      */
-    protected function find(DetectedArgument $argument): ?array
+    protected function find(string $value): ?array
     {
-        $value = $argument->stringValue();
-
-        if ($value === null) {
-            return null;
-        }
-
         $view = $this->views()->firstWhere('key', $value);
 
         return is_array($view) ? $view : null;
