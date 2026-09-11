@@ -8,11 +8,13 @@ use Illuminate\Container\Container;
 
 function memoryLimitProject(array $init = []): Project
 {
+    $scripts = new ScriptRunner('/tmp/laravel-lsp-project', ['php']);
+
     return new Project(
         FileUri::of('file:///tmp/laravel-lsp-project'),
         $init,
-        new ProjectIndex(new Container),
-        new ScriptRunner('/tmp/laravel-lsp-project', ['php']),
+        new ProjectIndex(new Container, $scripts),
+        $scripts,
     );
 }
 

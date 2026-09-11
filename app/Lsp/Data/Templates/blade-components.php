@@ -368,6 +368,8 @@ $components = new class
 
         $result = '';
 
+        $compiler = clone $compiler;
+
         $compiler->directive('props', function ($expression) use (&$result) {
             return $result = $expression;
         });

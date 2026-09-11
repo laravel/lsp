@@ -40,6 +40,6 @@ It provides completion, hover, diagnostic, link, and code-action behavior.
 
 ## LSP PHP Templates
 
-- LSP data templates live in `app/Lsp/Data/Templates/` and are executed in the user's Laravel app through `ScriptRunner`.
-- `ScriptRunner` prepends `app/Lsp/Data/Templates/global.php` before executing templates through Laravel Tinker.
+- LSP data templates live in `app/Lsp/Data/Templates/` and are executed in the user's Laravel app through `ScriptRunner`, which writes them into `storage/framework/`, prepends `app/Lsp/Data/Templates/global.php` and boots the application from the process working directory (Laravel Tinker is only used when the project cannot be booted directly).
+- `ProjectIndex` runs every template that is not loaded yet in a single process through `ScriptRunner::batch()`; `configs` runs first because it snapshots application state, and a template that throws yields empty data without affecting the others.
 - Shared template helpers live in `global.php` and are exposed through `LspHelper`.
