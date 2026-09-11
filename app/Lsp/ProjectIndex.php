@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Lsp;
 
 use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Contracts\TemplateDataProvider;
 use App\Lsp\Data\AppBindings;
 use App\Lsp\Data\Assets;
 use App\Lsp\Data\Auth;
@@ -57,6 +58,16 @@ class ProjectIndex
     ];
 
     /**
+     * Template providers whose data is a snapshot of application state.
+     *
+     * Their templates run before the others share a process with them, so
+     * the snapshot is not changed by whatever the other templates touch.
+     *
+     * @var array<int, string>
+     */
+    protected array $snapshots = ['configs'];
+
+    /**
      * Loaded project data.
      *
      * @var array<string, mixed>
@@ -66,10 +77,10 @@ class ProjectIndex
     /**
      * Instantiate a new class instance.
      */
-    public function __construct(protected Container $container)
-    {
-        //
-    }
+    public function __construct(
+        protected Container $container,
+        protected ScriptRunner $scripts,
+    ) {}
 
     /**
      * Get the app bindings provider.
@@ -220,7 +231,11 @@ class ProjectIndex
      */
     public function get(string $name): mixed
     {
-        return $this->loaded[$name] ??= $this->load($name);
+        if (!isset($this->loaded[$name])) {
+            $this->load($name);
+        }
+
+        return $this->loaded[$name];
     }
 
     /**
@@ -240,15 +255,69 @@ class ProjectIndex
     }
 
     /**
-     * Get the data.
+     * Load the data.
      */
-    protected function load(string $name): mixed
+    protected function load(string $name): void
     {
         if (! isset($this->providers[$name])) {
             throw new DataProviderNotFoundException($name);
         }
 
-        return $this->container->make($this->providers[$name])->get();
+        $provider = $this->container->make($this->providers[$name]);
+
+        if ($provider instanceof TemplateDataProvider) {
+            $this->loadTemplates();
+
+            return;
+        }
+
+        $this->loaded[$name] = $provider->get();
+    }
+
+    /**
+     * Load every template provider that is not loaded yet.
+     *
+     * Booting the application dominates the cost of running a template, so the
+     * pending templates run in a single process and share one boot.
+     */
+    protected function loadTemplates(): void
+    {
+        $providers = array_filter(
+            $this->templateProviders(),
+            fn (string $name): bool => !isset($this->loaded[$name]),
+            ARRAY_FILTER_USE_KEY,
+        );
+
+        $data = $this->scripts->batch(array_map(
+            fn (TemplateDataProvider $provider): string => $provider->template(),
+            $providers,
+        ));
+
+        foreach ($providers as $name => $provider) {
+            $this->loaded[$name] = $provider->parse(is_array($data[$name] ?? null) ? $data[$name] : []);
+        }
+    }
+
+    /**
+     * Get the template providers in the order their templates run.
+     *
+     * @return array<string, TemplateDataProvider>
+     */
+    protected function templateProviders(): array
+    {
+        $providers = [];
+
+        foreach ($this->providers as $name => $class) {
+            $provider = $this->container->make($class);
+
+            if ($provider instanceof TemplateDataProvider) {
+                $providers[$name] = $provider;
+            }
+        }
+
+        $snapshots = array_flip($this->snapshots);
+
+        return array_intersect_key($providers, $snapshots) + array_diff_key($providers, $snapshots);
     }
 
     /**

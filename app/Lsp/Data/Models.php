@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Contracts\TemplateDataProvider;
 use App\Lsp\Project;
 
-class Models implements DataProvider
+class Models implements TemplateDataProvider
 {
     /**
      * Instantiate a new class instance.
