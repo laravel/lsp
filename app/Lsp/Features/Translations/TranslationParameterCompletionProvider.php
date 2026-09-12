@@ -50,12 +50,13 @@ class TranslationParameterCompletionProvider implements CompletionProvider
     protected function patterns(): array
     {
         return [
-            Pattern::method(method: 'get', class: Pattern::contract('Translation\\Translator'), argument: 1),
+            Pattern::method(method: ['get', 'string'], class: Pattern::contract('Translation\\Translator'), argument: 1),
             Pattern::method(method: 'choice', class: Pattern::contract('Translation\\Translator'), argument: 2),
             Pattern::method(method: ['__', 'trans', '@lang'], argument: 1),
             Pattern::method(method: 'trans_choice', argument: 2),
-            Pattern::method(method: 'get', class: Pattern::facade('Lang'), argument: 1),
+            Pattern::method(method: ['get', 'string'], class: Pattern::facade('Lang'), argument: 1),
             Pattern::method(method: 'choice', class: Pattern::facade('Lang'), argument: 2),
+            Pattern::method(method: ['get', 'string'], class: 'trans', argument: 1),
         ];
     }
 

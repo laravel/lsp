@@ -45,7 +45,7 @@ $livewire = new class
                     return $view;
                 }
 
-                $files = $this->files($view);
+                $files = $this->files($component, $view);
 
                 if (count($files) === 1 && !str($view['path'])->endsWith('.blade.php')) {
                     return null;
@@ -77,10 +77,12 @@ $livewire = new class
                 return $view;
             }
 
+            $files = $this->files($component, $view);
+
             return array_merge($view, [
                 'livewire' => [
                     'props' => $this->getProps($component),
-                    'files' => [$view['path']],
+                    'files' => $files,
                 ],
             ]);
         });
@@ -115,14 +117,9 @@ $livewire = new class
                 'name'            => $prop,
                 'type'            => (string) $reflection->getType() ?: 'mixed',
                 'hasDefaultValue' => $reflection->hasDefaultValue(),
-                'defaultValue'    => $this->formatDefaultValue($reflection->getDefaultValue()),
+                'defaultValue'    => LspHelper::formatDefaultValue($reflection->getDefaultValue()),
             ];
         }, array_keys($component->all()));
-    }
-
-    protected function formatDefaultValue(mixed $value)
-    {
-        return is_string($value) ? "'{$value}'" : $value;
     }
 
     protected function key(array $view): string
@@ -133,22 +130,51 @@ $livewire = new class
             ->value();
     }
 
-    protected function files(array $view): array
+    protected function classFile(object $class): ?string
     {
-        if (!$this->isMfc($view)) {
-            return [$view['path']];
-        }
+        try {
+            $reflection = new \ReflectionClass($class);
 
+            if ($reflection->isAnonymous()) {
+                return null;
+            }
+
+            return LspHelper::relativePath($reflection->getFileName());
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function files(object $component, array $view): array
+    {
+        return collect()
+            ->when(
+                $this->isMfc($view),
+                fn (Collection $files) => $files->merge($this->mfcFiles($view)),
+                fn (Collection $files) => $files->prepend($view['path'])
+            )
+            ->push($this->classFile($component))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function mfcFiles(array $view): Collection
+    {
         $filePathWithoutExtension = str($view['path'])->replace($this->extensions, '');
 
         return collect($this->extensions)
             ->map(fn (string $extension) => $filePathWithoutExtension->append($extension))
-            ->filter(fn (string $path) => File::exists($path))
-            ->all();
+            ->filter(fn (string $path) => File::exists($path));
     }
 
     protected function isMfc(array $view): bool
     {
+        if (! $this->isVersionFour()) {
+            return false;
+        }
+
         $directory = str($view['path'])
             ->replace('⚡', '')
             ->dirname()

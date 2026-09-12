@@ -8,8 +8,8 @@ use App\Lsp\Detection\AutocompleteArgument;
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Support\FileUri;
 use App\Lsp\Project;
+use App\Lsp\Support\FileUri;
 use Illuminate\Support\Collection;
 
 class AssetDocumentMapper extends DocumentMapper
@@ -109,7 +109,7 @@ class AssetDocumentMapper extends DocumentMapper
             return null;
         }
 
-        $asset = $this->assets()->firstWhere('path', $value);
+        $asset = $this->assets()->firstWhere('path', ltrim($value, '/'));
 
         return is_array($asset) ? $asset : null;
     }

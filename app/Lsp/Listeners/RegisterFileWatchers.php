@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Lsp\Listeners;
 
+use App\Lsp\Contracts\FileWatcher;
 use App\Lsp\Contracts\Listener;
 use App\Lsp\FeatureRegistry;
 use App\Lsp\Project;
@@ -26,6 +27,8 @@ class RegisterFileWatchers implements Listener
      */
     public function handle(JsonRpcRequest $request): void
     {
+        $watchers = $this->features->watchers();
+
         $this->server->send('client/registerCapability', [
             'registrations' => [
                 [
@@ -38,21 +41,28 @@ class RegisterFileWatchers implements Listener
                                 'pattern' => $pattern,
                             ],
                             'kind' => 7,
-                        ], $this->patterns()),
+                        ], $this->patterns($watchers)),
                     ],
                 ],
             ],
         ]);
+
+        foreach ($watchers as $watcher) {
+            $watcher->initialize();
+        }
     }
 
     /**
      * Collect watcher patterns.
+     *
+     * @param  array<int, FileWatcher>  $watchers
+     * @return array<int, string>
      */
-    protected function patterns(): array
+    protected function patterns(array $watchers): array
     {
         $patterns = [];
 
-        foreach ($this->features->watchers() as $watcher) {
+        foreach ($watchers as $watcher) {
             array_push($patterns, ...$watcher->patterns());
         }
 

@@ -64,7 +64,7 @@ jobs:
 
       - name: SPC Combine
         run: |
-          ./spc micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
+          ./spc micro:combine builds/laravel-lsp -I "memory_limit=512M" -O bin/server-${{ github.ref_name }}-${{ matrix.arch }}
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -103,14 +103,14 @@ jobs:
 
       - name: Download PHP
         run: |
-          curl -L -O https://dl.static-php.dev/static-php-cli/windows/spc-max/php-8.3.9-micro-win.zip
-          tar -xf php-8.3.9-micro-win.zip
+          curl -L -O https://dl.static-php.dev/static-php-cli/windows/spc-max/php-8.3.30-micro-win.zip
+          tar -xf php-8.3.30-micro-win.zip
           mkdir -p buildroot/bin
           mv micro.sfx buildroot/bin
 
       - name: SPC Combine
         run: |
-          .\spc-windows-x64.exe micro:combine builds/laravel-lsp -O bin/server-${{ github.ref_name }}-x64-win32
+          .\spc-windows-x64.exe micro:combine builds/laravel-lsp -I "memory_limit=512M" -O bin/server-${{ github.ref_name }}-x64-win32
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -141,7 +141,7 @@ jobs:
           find dist -type f -name 'server-*' -exec cp {} release/ \;
 
       - name: Create release and upload binaries
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: release/*
           fail_on_unmatched_files: true

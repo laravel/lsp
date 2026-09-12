@@ -68,6 +68,7 @@ final class Initialize implements Method
             'initializationOptions' => $project->all(),
             'phpEnvironment'        => $project->phpEnvironment(),
             'phpCommand'            => $project->scripts->command(),
+            'memoryLimit'           => $project->applyMemoryLimit(),
         ]);
 
         return JsonRpcResponse::result($request->id(), [
@@ -96,6 +97,7 @@ final class Initialize implements Method
             'laravel' => [
                 'phpEnvironment' => $project->phpEnvironment(),
                 'phpCommand'     => $project->scripts->command(),
+                'memoryLimit'    => $project->memoryLimit(),
             ],
         ]);
     }

@@ -23,7 +23,9 @@ class Parse
             self::debugBreak();
         }
 
-        self::debug($depth, $node::class, "\e[2m" . self::getCodeSnippet($node) . "\e[0m");
+        if (self::$debug) {
+            self::debug($depth, $node::class, "\e[2m" . self::getCodeSnippet($node) . "\e[0m");
+        }
 
         $class = basename(str_replace('\\', '/', $node::class));
         $parserClass = 'App\\Parsers\\' . $class . 'Parser';

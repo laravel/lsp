@@ -10,8 +10,8 @@ use App\Lsp\Detection\DetectedArguments;
 use App\Lsp\Detection\Pattern;
 use App\Lsp\Document;
 use App\Lsp\Features\Support\DocumentMapper;
-use App\Lsp\Support\Position;
 use App\Lsp\Project;
+use App\Lsp\Support\Position;
 use Illuminate\Support\Collection;
 
 class AuthDocumentMapper extends DocumentMapper
@@ -103,7 +103,7 @@ class AuthDocumentMapper extends DocumentMapper
      */
     protected function toDiagnostics(DetectedArgument $argument): array
     {
-        return collect($argument->stringValues())
+        return collect($argument->literalStringValues())
             ->flatMap(fn (array $value): array => $this->diagnosticFrom($argument, $value['value'], $value['range']))
             ->values()
             ->all();

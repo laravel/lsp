@@ -40,11 +40,19 @@ Neovim 0.11+ is required. Add a custom LSP configuration:
 vim.lsp.config("laravel_lsp", {
     cmd = { "laravel-lsp" },
     filetypes = { "php", "blade" },
-    root_markers = { "artisan", "composer.json", ".git" },
+    root_dir = function(bufnr, on_dir)
+        local root = vim.fs.root(bufnr, "artisan")
+
+        if root then
+            on_dir(root)
+        end
+    end,
 })
 
 vim.lsp.enable("laravel_lsp")
 ```
+
+The `root_dir` callback only starts the server when an `artisan` file is found, so the server is not launched for PHP projects that are not Laravel applications.
 
 ### OpenCode
 
@@ -92,6 +100,7 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 | ----------------------- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `phpEnvironment`        | `string`   | `"auto"`                                | Select the environment used to detect the PHP command for indexing project data.                         |
 | `phpCommand`            | `string[]` | Detected from `phpEnvironment`          | Use an explicit command and arguments, such as `["php"]` or `["./vendor/bin/sail", "php"]`.              |
+| `memoryLimit`           | `string`   | `"512M"`                                | Set the LSP server process `memory_limit` during initialize. Use PHP shorthand such as `"512M"`, `"1G"`, or `"-1"`. |
 | `definitionProvider`    | `boolean`  | `true`                                  | Advertise definition support to the editor. Definitions are resolved from enabled document link options. |
 | `pestGenerateDocBlocks` | `boolean`  | `true`                                  | Generate Pest helper docblocks and keep them updated when tests or Composer autoload files change.       |
 | `pestHelperFilePath`    | `string`   | `"storage/framework/testing/_pest.php"` | Set the Pest helper output path relative to the Laravel project root.                                    |
@@ -113,6 +122,8 @@ The `phpEnvironment` option controls which PHP command is used when the server r
 If detection fails, or an unknown value is provided, the server falls back to `php`.
 
 When `phpCommand` is a non-empty array, it takes precedence over `phpEnvironment`.
+
+The `memoryLimit` option is applied to the LSP server process during initialize, before project index JSON is decoded. Official editor binaries otherwise default to PHP's 128M `memory_limit`. Invalid values fall back to `"512M"`. This option does not change the PHP command used to run project scripts.
 
 ### Feature Options
 

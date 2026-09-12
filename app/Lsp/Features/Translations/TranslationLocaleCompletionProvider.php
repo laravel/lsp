@@ -50,8 +50,9 @@ class TranslationLocaleCompletionProvider implements CompletionProvider
     protected function patterns(): array
     {
         return [
-            Pattern::method(method: ['get', 'choice'], class: Pattern::contract('Translation\\Translator'), argument: [0, 1, 2, 3]),
-            Pattern::method(method: ['has', 'hasForLocale', 'get', 'choice'], class: Pattern::facade('Lang'), argument: [0, 1, 2, 3]),
+            Pattern::method(method: ['get', 'string', 'choice'], class: Pattern::contract('Translation\\Translator'), argument: [0, 1, 2, 3]),
+            Pattern::method(method: ['has', 'hasForLocale', 'get', 'string', 'choice'], class: Pattern::facade('Lang'), argument: [0, 1, 2, 3]),
+            Pattern::method(method: ['get', 'string'], class: 'trans', argument: [0, 1, 2, 3]),
             Pattern::method(method: ['__', 'trans', 'trans_choice', '@lang'], argument: [0, 1, 2, 3]),
         ];
     }
@@ -68,9 +69,10 @@ class TranslationLocaleCompletionProvider implements CompletionProvider
         $method = $argument->item()['methodName'] ?? null;
         $class = $argument->item()['className'] ?? '';
         $indexes = [
-            Pattern::contract('Translation\\Translator') => ['get' => 2, 'choice' => 3],
-            'Lang'                                       => ['has' => 1, 'hasForLocale' => 1, 'get' => 2, 'choice' => 3],
-            Pattern::support('Facades\\Lang')            => ['has' => 1, 'hasForLocale' => 1, 'get' => 2, 'choice' => 3],
+            Pattern::contract('Translation\\Translator') => ['get' => 2, 'string' => 2, 'choice' => 3],
+            'Lang'                                       => ['has' => 1, 'hasForLocale' => 1, 'get' => 2, 'string' => 2, 'choice' => 3],
+            Pattern::support('Facades\\Lang')            => ['has' => 1, 'hasForLocale' => 1, 'get' => 2, 'string' => 2, 'choice' => 3],
+            'trans'                                      => ['get' => 2, 'string' => 2],
             ''                                           => ['__' => 2, 'trans' => 2, '@lang' => 2, 'trans_choice' => 3],
         ];
 

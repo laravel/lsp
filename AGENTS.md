@@ -22,7 +22,7 @@ It provides completion, hover, diagnostic, link, and code-action behavior.
 - `DataProvider` implementations expose project facts such as routes and views, and own template loading, parsing, watcher patterns, changed-path matching, and cache state.
 - LSP feature behavior is exposed through provider contracts in `app/Lsp/Contracts/` such as `LinkProvider`, `HoverProvider`, `DiagnosticProvider`, and `CompletionProvider`.
 - `FeatureRegistry` constructs the active providers for each LSP capability and supplies them to request handlers and listeners.
-- Some domain features expose a shared feature through adapters such as `LinkFeature`, `HoverFeature`, and `DiagnosticFeature`. Others, such as routes, expose separate capability providers constructed by `FeatureRegistry`.
+- Each domain exposes one thin provider class per capability, all constructed by `FeatureRegistry`. Mapper-style domains delegate to their `*DocumentMapper`.
 - Shared document traversal for mapper-style features lives in `app/Lsp/Features/Support/DocumentMapper`; domain mappers own their patterns and output conversion.
 - Route capability providers own capability-specific configuration, while `RouteDocumentMapper` owns route argument detection, filtering, lookup, Volt component lookup, and output conversion.
 - `Document::detect()` analyzes completed documents. `Document::autocomplete($position)` analyzes incomplete cursor context up to the cursor.
@@ -30,6 +30,13 @@ It provides completion, hover, diagnostic, link, and code-action behavior.
 - `AutocompleteArguments` and `AutocompleteArgument` represent completion contexts where a target argument may be incomplete or lack parser ranges.
 - `Pattern` provides matching for both detected and autocomplete arguments.
 - Listeners invoke providers and publish responses for document notifications.
+- `Transport` implementations own JSON-RPC framing over stdio. `AmpStdioTransport` dispatches requests concurrently, while `StdioTransport` handles one message at a time and is used on Windows.
+- File watching lives in `app/Lsp/Watchers/`. `RegisterFileWatchers` registers the union of watcher patterns on `initialized`, `NotifyFileWatchers` fans `workspace/didChangeWatchedFiles` out to each `FileWatcher`, and `DataProviderWatcher` invalidates matching `ProjectIndex` entries.
+
+## Custom Requests
+
+- `laravel/data` returns indexed project facts to the client. It takes a `name` parameter and responds with that provider's data, loading it on first use.
+- Valid names are the `ProjectIndex` provider keys: `appBindings`, `assets`, `auth`, `bladeComponents`, `configs`, `controllers`, `customBladeDirectives`, `debugInfo`, `env`, `inertiaViews`, `middleware`, `mixManifest`, `models`, `paths`, `routes`, `tests`, `translations`, `views`.
 
 ## LSP PHP Templates
 

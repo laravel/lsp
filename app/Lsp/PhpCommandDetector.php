@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Lsp;
 
 use App\Lsp\Contracts\ExceptionHandler;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class PhpCommandDetector
@@ -147,21 +148,11 @@ class PhpCommandDetector
     protected function run(array $command): ?string
     {
         try {
-            $process = @proc_open($command, [
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ], $pipes, $this->path);
+            $process = new Process($command, $this->path, timeout: null);
 
-            if (!is_resource($process)) {
-                return null;
-            }
+            $process->run();
 
-            $output = stream_get_contents($pipes[1]);
-
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-
-            return proc_close($process) === 0 && $output !== false ? $output : null;
+            return $process->isSuccessful() ? $process->getOutput() : null;
         } catch (Throwable $e) {
             $this->exceptions->report($e);
 
