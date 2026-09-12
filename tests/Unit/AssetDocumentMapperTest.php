@@ -2,7 +2,6 @@
 
 use App\Lsp\Detection\DetectedArgument;
 use App\Lsp\Features\Assets\AssetDocumentMapper;
-use App\Lsp\PintRunner;
 use App\Lsp\Project;
 use App\Lsp\ProjectIndex;
 use App\Lsp\ScriptRunner;
@@ -43,7 +42,6 @@ function assetMapper(): AssetDocumentMapper
         init: [],
         index: $index,
         scripts: new ScriptRunner('/project', []),
-        pint: new PintRunner('/project', []),
     );
 
     return new class($project) extends AssetDocumentMapper

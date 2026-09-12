@@ -13,6 +13,11 @@ final class Project
     use InteractsWithData;
 
     /**
+     * The runner used to format documents with Pint.
+     */
+    public readonly PintRunner $pint;
+
+    /**
      * Create a new project instance.
      */
     public function __construct(
@@ -20,8 +25,10 @@ final class Project
         public readonly array $init,
         public readonly ProjectIndex $index,
         public readonly ScriptRunner $scripts,
-        public readonly PintRunner $pint,
-    ) {}
+        ?PintRunner $pint = null,
+    ) {
+        $this->pint = $pint ?? new PintRunner($uri->path(), $scripts->command());
+    }
 
     /**
      * Get the configured PHP environment.

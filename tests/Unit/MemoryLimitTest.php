@@ -1,6 +1,5 @@
 <?php
 
-use App\Lsp\PintRunner;
 use App\Lsp\Project;
 use App\Lsp\ProjectIndex;
 use App\Lsp\ScriptRunner;
@@ -14,7 +13,6 @@ function memoryLimitProject(array $init = []): Project
         $init,
         new ProjectIndex(new Container),
         new ScriptRunner('/tmp/laravel-lsp-project', ['php']),
-        new PintRunner('/tmp/laravel-lsp-project', ['php']),
     );
 }
 
