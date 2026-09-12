@@ -94,6 +94,8 @@ it('declines to format when pint discards the document name', function () {
     // The suite pins laravel/pint below 1.30.5, which is the release that
     // started naming the stdin file after the document. Formatting through
     // an older Pint with psr_autoloading enabled would rename the class.
+    // Once the pin moves to 1.30.5 or later this test will fail, and it
+    // should be reworked to fake the old output instead of running Pint.
     $project = sys_get_temp_dir() . '/laravel-lsp-psr-' . bin2hex(random_bytes(6));
 
     mkdir($project, 0700, true);
