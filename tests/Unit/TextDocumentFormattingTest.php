@@ -83,3 +83,11 @@ it('spans the whole document, counting utf-16 code units', function () {
             'end'   => ['line' => 1, 'character' => 5],
         ]);
 });
+
+it('spans the whole document across any line ending', function (string $contents) {
+    expect(TextDocumentFormatting::range($contents)['end'])->toBe(['line' => 2, 'character' => 2]);
+})->with([
+    'lf'   => ["<?php\n\nab"],
+    'crlf' => ["<?php\r\n\r\nab"],
+    'cr'   => ["<?php\r\rab"],
+]);

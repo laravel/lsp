@@ -66,7 +66,8 @@ class TextDocumentFormatting implements Method
      */
     public static function range(string $contents): array
     {
-        $lines = explode("\n", $contents);
+        // Editors treat a lone "\r" as a line break too, not just "\n".
+        $lines = preg_split('/\r\n|\r|\n/', $contents) ?: [''];
         $last = array_key_last($lines);
 
         return [
