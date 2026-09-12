@@ -154,6 +154,8 @@ The server formats PHP and Blade documents with the project's own [Pint](https:/
 
 Formatting requires `laravel/pint` in the project and **Pint 1.30.5 or later**. Earlier versions named their temporary stdin file after a random identifier, so the `psr_autoloading` rule renamed the document's class to match it. The server detects that and returns no edits rather than corrupting the document.
 
+Pint is detected once, when the server starts. After installing or removing Pint, restart the language server so the editor picks up the change.
+
 Formatting Blade templates additionally requires the prettier dependencies Pint installs for its `Pint/laravel_blade` rule.
 
 Pint is expected at `vendor/bin/pint`. Set `pintPath` when it lives elsewhere, such as a tools directory or a global installation:
