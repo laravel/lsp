@@ -50,9 +50,16 @@ it('preserves the detected php command', function () {
         ->toBe(['docker', 'compose', 'exec', 'app', 'php']);
 });
 
-it('reports pint as unavailable when it is not installed', function () {
-    expect((new PintRunner('/does-not-exist', ['php']))->available())->toBeFalse()
-        ->and((new PintRunner(base_path(), ['php']))->available())->toBeTrue();
+it('reports whether pint is installed', function () {
+    $project = sys_get_temp_dir() . '/laravel-lsp-available-' . bin2hex(random_bytes(6));
+
+    mkdir($project . '/vendor/bin', 0700, true);
+
+    expect((new PintRunner($project, ['php']))->available())->toBeFalse();
+
+    touch($project . '/vendor/bin/pint');
+
+    expect((new PintRunner($project, ['php']))->available())->toBeTrue();
 });
 
 it('formats a document without touching the file system', function () {
@@ -135,9 +142,18 @@ it('applies exclusions when the project root is reached through a symlink', func
 })->skip(PHP_OS_FAMILY === 'Windows', 'Requires symlink support.');
 
 it('leaves excluded paths untouched', function () {
-    $runner = new PintRunner(base_path(), ['php']);
+    $project = sys_get_temp_dir() . '/laravel-lsp-exclude-' . bin2hex(random_bytes(6));
+
+    mkdir($project . '/ignored', 0700, true);
+    file_put_contents($project . '/pint.json', json_encode([
+        'preset'  => 'laravel',
+        'exclude' => ['ignored'],
+    ]));
+
+    $runner = new PintRunner($project, ['php'], base_path('vendor/bin/pint'));
 
     $contents = "<?php\nclass  Foo{}\n";
 
-    expect($runner->format(base_path('builds/excluded.php'), $contents))->toBe($contents);
+    expect($runner->format($project . '/ignored/Foo.php', $contents))->toBe($contents)
+        ->and($runner->format($project . '/Foo.php', $contents))->not->toBe($contents);
 });
