@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Contracts\TemplateDataProvider;
 use App\Lsp\Project;
 use Illuminate\Support\Collection;
 
-class Views implements DataProvider
+class Views implements TemplateDataProvider
 {
     /**
      * Instantiate a new class instance.

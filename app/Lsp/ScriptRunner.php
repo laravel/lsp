@@ -20,6 +20,14 @@ class ScriptRunner
     protected ?bool $bootable = null;
 
     /**
+     * Whether scripts may share a process.
+     *
+     * Turned off once a shared process fails, so a project that cannot run
+     * its scripts together does not pay for the attempt on every load.
+     */
+    protected bool $batchable = true;
+
+    /**
      * Create a new PHP runner instance.
      *
      * @param  array<int, string>  $command
@@ -40,7 +48,7 @@ class ScriptRunner
     }
 
     /**
-     * Run PHP code in the user's Laravel application via artisan tinker.
+     * Run PHP code in the user's Laravel application.
      */
     public function run(string $code): ?string
     {
@@ -55,6 +63,158 @@ class ScriptRunner
             return null;
         }
 
+        try {
+            return $this->execute($script);
+        } finally {
+            @unlink($this->path . '/' . $script);
+        }
+    }
+
+    /**
+     * Run several PHP scripts in the user's Laravel application and decode each output as JSON.
+     *
+     * Booting the application dominates the cost of a script, so the scripts share a
+     * single process. Each one runs in its own scope with its output captured on its
+     * own, and a script that throws yields null without affecting the others. When the
+     * shared process fails, every script is run on its own instead, now and for the
+     * rest of the session.
+     *
+     * @param  array<string, string>  $codes
+     * @return array<string, mixed>
+     */
+    public function batch(array $codes): array
+    {
+        if ($codes === []) {
+            return [];
+        }
+
+        if (count($codes) === 1) {
+            return array_map($this->json(...), $codes);
+        }
+
+        $outputs = $this->batchable ? $this->runBatch($codes) : null;
+
+        if ($outputs === null) {
+            $this->batchable = false;
+
+            $outputs = array_map($this->run(...), $codes);
+        }
+
+        return array_map($this->decode(...), $outputs);
+    }
+
+    /**
+     * Run the given scripts in a single process and capture each output.
+     *
+     * @param  array<string, string>  $codes
+     * @return array<string, string|null>|null
+     */
+    protected function runBatch(array $codes): ?array
+    {
+        $id = bin2hex(random_bytes(8));
+        $scripts = [];
+        $written = [];
+
+        foreach (array_keys($codes) as $index => $key) {
+            $scripts[$key] = 'lsp-' . $id . '-' . $index . '.php';
+        }
+
+        try {
+            foreach ($codes as $key => $code) {
+                $file = $this->store($scripts[$key], '<?php' . PHP_EOL . $this->normalize($code));
+
+                if ($file === null) {
+                    return null;
+                }
+
+                $written[] = $file;
+            }
+
+            $script = $this->write($this->batchCode($scripts));
+
+            if ($script === null) {
+                return null;
+            }
+
+            $written[] = $script;
+
+            return $this->outputs($this->execute($script), $codes);
+        } finally {
+            foreach ($written as $file) {
+                @unlink($this->path . '/' . $file);
+            }
+        }
+    }
+
+    /**
+     * Get the code that runs the given scripts one after another and reports every output.
+     *
+     * Each script is included inside its own closure so its variables stay local, the
+     * error level is restored before each one, and the script's own output is buffered.
+     *
+     * @param  array<string, string>  $scripts
+     */
+    protected function batchCode(array $scripts): string
+    {
+        return implode(PHP_EOL, [
+            '$__level = error_reporting();',
+            '$__outputs = [];',
+            '$__errors = [];',
+            'foreach (' . var_export($scripts, true) . ' as $__key => $__script) {',
+            '    error_reporting($__level);',
+            '    ob_start();',
+            '    try {',
+            "        (static function () use (\$__script) { include __DIR__ . '/' . \$__script; })();",
+            '        $__outputs[$__key] = ob_get_clean();',
+            '    } catch (Throwable $__e) {',
+            '        ob_end_clean();',
+            '        $__outputs[$__key] = null;',
+            "        \$__errors[\$__key] = get_class(\$__e) . ': ' . \$__e->getMessage() . ' in ' . \$__e->getFile() . ':' . \$__e->getLine();",
+            '    }',
+            '}',
+            "echo json_encode(['outputs' => \$__outputs, 'errors' => \$__errors]);",
+        ]);
+    }
+
+    /**
+     * Extract the output of every script from the output of the shared process.
+     *
+     * @param  array<string, string>  $codes
+     * @return array<string, string|null>|null
+     */
+    protected function outputs(?string $output, array $codes): ?array
+    {
+        $decoded = $output === null ? null : json_decode($output, true);
+
+        if (!is_array($decoded) || !is_array($decoded['outputs'] ?? null)) {
+            return null;
+        }
+
+        foreach ($decoded['errors'] ?? [] as $key => $error) {
+            info('PHP runner error.', [
+                'script' => $key,
+                'error'  => $error,
+            ]);
+        }
+
+        $outputs = [];
+
+        foreach (array_keys($codes) as $key) {
+            if (!array_key_exists($key, $decoded['outputs'])) {
+                return null;
+            }
+
+            $outputs[$key] = is_string($decoded['outputs'][$key]) ? $decoded['outputs'][$key] : null;
+        }
+
+        return $outputs;
+    }
+
+    /**
+     * Execute the given script and get its output.
+     */
+    protected function execute(string $script): ?string
+    {
         try {
             $process = new Process($this->arguments($script), $this->path, timeout: null);
 
@@ -76,8 +236,6 @@ class ScriptRunner
             report($e);
 
             return null;
-        } finally {
-            @unlink($this->path . '/' . $script);
         }
     }
 
@@ -132,7 +290,15 @@ class ScriptRunner
      */
     protected function write(string $code): ?string
     {
-        $script = 'storage/framework/lsp-' . bin2hex(random_bytes(8)) . '.php';
+        return $this->store('lsp-' . bin2hex(random_bytes(8)) . '.php', $this->code($code));
+    }
+
+    /**
+     * Store a file inside the project's framework storage.
+     */
+    protected function store(string $name, string $contents): ?string
+    {
+        $script = 'storage/framework/' . $name;
         $path = $this->path . '/' . $script;
         $directory = dirname($path);
 
@@ -140,7 +306,7 @@ class ScriptRunner
             return null;
         }
 
-        return @file_put_contents($path, $this->code($code)) === false ? null : $script;
+        return @file_put_contents($path, $contents) === false ? null : $script;
     }
 
     /**
@@ -172,8 +338,14 @@ class ScriptRunner
      */
     public function json(string $code): mixed
     {
-        $output = $this->run($code);
+        return $this->decode($this->run($code));
+    }
 
+    /**
+     * Decode the output of a script as JSON.
+     */
+    protected function decode(?string $output): mixed
+    {
         if ($output === null) {
             return null;
         }

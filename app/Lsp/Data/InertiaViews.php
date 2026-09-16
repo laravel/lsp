@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Lsp\Data;
 
-use App\Lsp\Contracts\DataProvider;
+use App\Lsp\Contracts\TemplateDataProvider;
 use App\Lsp\Project;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class InertiaViews implements DataProvider
+class InertiaViews implements TemplateDataProvider
 {
     /**
      * Create a new inertia views provider instance.

@@ -131,3 +131,114 @@ test('the bootstrap is empty when the project cannot be booted without artisan',
         scriptRunnerCleanup($root);
     }
 });
+
+test('a batch runs every script in a single process', function () {
+    $root = scriptRunnerProject('batch');
+
+    try {
+        expect(scriptRunnerFor($root)->batch([
+            'first'  => 'define("SCRIPT_RUNNER_FIRST", true); echo json_encode(SCRIPT_RUNNER_BOOTED);',
+            'second' => '<?php echo json_encode(defined("SCRIPT_RUNNER_FIRST"));',
+            'third'  => 'use Random\Randomizer; echo json_encode((new Randomizer)->getInt(3, 3));',
+        ]))->toBe(['first' => true, 'second' => true, 'third' => 3]);
+    } finally {
+        scriptRunnerCleanup($root);
+    }
+});
+
+test('a batch keeps the variables of each script to itself', function () {
+    $root = scriptRunnerProject('batch-scope');
+
+    try {
+        expect(scriptRunnerFor($root)->batch([
+            'first'  => '$shared = 1; echo json_encode($shared);',
+            'second' => 'echo json_encode(isset($shared));',
+        ]))->toBe(['first' => 1, 'second' => false]);
+    } finally {
+        scriptRunnerCleanup($root);
+    }
+});
+
+test('a batch reports a script that throws without affecting the others', function () {
+    $root = scriptRunnerProject('batch-throws');
+
+    try {
+        expect(scriptRunnerFor($root)->batch([
+            'first'  => 'define("SCRIPT_RUNNER_FIRST", true); echo json_encode(1);',
+            'second' => 'echo "partial"; throw new RuntimeException("boom");',
+            'third'  => 'echo json_encode(defined("SCRIPT_RUNNER_FIRST"));',
+        ]))->toBe(['first' => 1, 'second' => null, 'third' => true]);
+    } finally {
+        scriptRunnerCleanup($root);
+    }
+});
+
+test('a batch runs each script on its own when the shared process fails', function () {
+    $root = scriptRunnerProject('batch-fails');
+
+    try {
+        $runner = scriptRunnerFor($root);
+
+        expect($runner->batch([
+            'first'  => 'define("SCRIPT_RUNNER_FIRST", true); echo json_encode(1);',
+            'second' => 'exit(1);',
+            'third'  => 'echo json_encode(defined("SCRIPT_RUNNER_FIRST"));',
+        ]))->toBe(['first' => 1, 'second' => null, 'third' => false]);
+
+        expect($runner->batch([
+            'first'  => 'define("SCRIPT_RUNNER_FIRST", true); echo json_encode(1);',
+            'second' => 'echo json_encode(defined("SCRIPT_RUNNER_FIRST"));',
+        ]))->toBe(['first' => 1, 'second' => false]);
+    } finally {
+        scriptRunnerCleanup($root);
+    }
+});
+
+test('a batch with a single script runs it directly', function () {
+    $root = scriptRunnerProject('batch-single');
+
+    try {
+        expect(scriptRunnerFor($root)->batch(['only' => 'echo json_encode(SCRIPT_RUNNER_BOOTED);']))
+            ->toBe(['only' => true])
+            ->and(scriptRunnerFor($root)->batch([]))
+            ->toBe([]);
+    } finally {
+        scriptRunnerCleanup($root);
+    }
+});
+
+test('a batch resolves the scripts inside the PHP environment', function () {
+    $host = scriptRunnerProject('batch-host');
+    $runtime = scriptRunnerProject('batch-runtime');
+
+    try {
+        mkdir($runtime . '/storage/framework', 0777, true);
+
+        $runner = new class($host, ['php'], $runtime) extends ScriptRunner
+        {
+            public function __construct(string $path, array $command, protected string $runtime)
+            {
+                parent::__construct($path, $command);
+            }
+
+            protected function execute(string $script): ?string
+            {
+                foreach (glob($this->path . '/storage/framework/lsp-*.php') ?: [] as $file) {
+                    copy($file, $this->runtime . '/storage/framework/' . basename($file));
+                }
+
+                $process = new Process([PHP_BINARY, $script], $this->runtime);
+                $process->mustRun();
+
+                return $process->getOutput();
+            }
+        };
+
+        expect($runner->batch([
+            'first'  => 'echo json_encode(SCRIPT_RUNNER_PROJECT);',
+            'second' => 'echo json_encode(SCRIPT_RUNNER_PROJECT);',
+        ]))->toBe(['first' => realpath($runtime), 'second' => realpath($runtime)]);
+    } finally {
+        scriptRunnerCleanup($host, $runtime);
+    }
+});
