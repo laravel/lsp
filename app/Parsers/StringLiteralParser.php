@@ -50,12 +50,76 @@ class StringLiteralParser extends AbstractParser
     protected function contents(StringLiteral $node): string
     {
         $contents = $node->getStringContentsText();
+        $kind = $this->kind($node);
 
-        if (($node->startQuote->kind ?? null) !== TokenKind::HeredocStart) {
-            return $contents;
+        if ($kind === 'heredoc' || $kind === 'nowdoc') {
+            $contents = preg_replace('/\r?\n$/', '', $contents);
         }
 
-        return preg_replace('/\r?\n$/', '', $contents);
+        return match ($kind) {
+            'nowdoc'  => $contents,
+            'single'  => strtr($contents, ['\\\\' => '\\', "\\'" => "'"]),
+            'heredoc' => $this->unescape($contents, false),
+            default   => $this->unescape($contents, true),
+        };
+    }
+
+    /**
+     * Get the kind of string literal the node holds.
+     */
+    protected function kind(StringLiteral $node): string
+    {
+        if (($node->startQuote->kind ?? null) !== TokenKind::HeredocStart) {
+            return ($node->getRoot()->getFullText()[$node->getStartPosition()] ?? '"') === "'"
+                ? 'single'
+                : 'double';
+        }
+
+        $start = substr($node->getRoot()->getFullText(), $node->getStartPosition(), 32);
+
+        return preg_match('/^<<<[ \t]*\'/', $start) === 1 ? 'nowdoc' : 'heredoc';
+    }
+
+    /**
+     * Resolve the escape sequences PHP evaluates in a double quoted string.
+     *
+     * A heredoc uses the same rules except that a quote is never escaped,
+     * so a backslash before one is kept.
+     */
+    protected function unescape(string $contents, bool $escapesQuote): string
+    {
+        return preg_replace_callback(
+            '/\\\\(u\{[0-9A-Fa-f]+\}|x[0-9A-Fa-f]{1,2}|[0-7]{1,3}|.)/s',
+            function (array $matches) use ($escapesQuote): string {
+                $sequence = $matches[1];
+
+                if (str_starts_with($sequence, 'u{')) {
+                    return mb_chr((int) hexdec(substr($sequence, 2, -1)), 'UTF-8') ?: $matches[0];
+                }
+
+                if ($sequence[0] === 'x' && strlen($sequence) > 1) {
+                    return chr((int) hexdec(substr($sequence, 1)));
+                }
+
+                if (preg_match('/^[0-7]{1,3}$/', $sequence) === 1) {
+                    return chr((int) octdec($sequence) % 256);
+                }
+
+                return match (true) {
+                    $sequence === 'n'                  => "\n",
+                    $sequence === 'r'                  => "\r",
+                    $sequence === 't'                  => "\t",
+                    $sequence === 'v'                  => "\v",
+                    $sequence === 'e'                  => "\e",
+                    $sequence === 'f'                  => "\f",
+                    $sequence === '\\'                 => '\\',
+                    $sequence === '$'                  => '$',
+                    $sequence === '"' && $escapesQuote => '"',
+                    default                            => $matches[0],
+                };
+            },
+            $contents
+        );
     }
 
     /**
