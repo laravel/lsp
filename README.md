@@ -101,6 +101,7 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 | `phpCommand`            | `string[]` | Detected from `phpEnvironment`          | Use an explicit command and arguments, such as `["php"]` or `["./vendor/bin/sail", "php"]`.              |
 | `memoryLimit`           | `string`   | `"512M"`                                | Set the LSP server process `memory_limit` during initialize. Use PHP shorthand such as `"512M"`, `"1G"`, or `"-1"`. |
 | `definitionProvider`    | `boolean`  | `true`                                  | Advertise definition support to the editor. Definitions are resolved from enabled document link options. |
+| `eloquentModelPaths`    | `string[]` | `["app/Models"]`                        | Directory paths or glob patterns for model files, relative to the project root.                          |
 | `pestGenerateDocBlocks` | `boolean`  | `true`                                  | Generate Pest helper docblocks and keep them updated when tests or Composer autoload files change.       |
 | `pestHelperFilePath`    | `string`   | `"storage/framework/testing/_pest.php"` | Set the Pest helper output path relative to the Laravel project root.                                    |
 

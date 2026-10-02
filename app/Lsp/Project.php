@@ -49,6 +49,20 @@ final class Project
     }
 
     /**
+     * Get configured project-relative model directory paths or glob patterns.
+     */
+    public function modelPaths(): array
+    {
+        $paths = $this->data('eloquentModelPaths');
+
+        if (!is_array($paths)) {
+            return ['app/Models'];
+        }
+
+        return $paths;
+    }
+
+    /**
      * Apply the configured memory limit to the current process.
      */
     public function applyMemoryLimit(): string

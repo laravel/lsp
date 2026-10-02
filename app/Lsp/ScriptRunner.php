@@ -42,9 +42,9 @@ class ScriptRunner
     /**
      * Run PHP code in the user's Laravel application via artisan tinker.
      */
-    public function run(string $code): ?string
+    public function run(string $code, array $arguments = []): ?string
     {
-        $script = $this->write($code);
+        $script = $this->write($code, $arguments);
 
         if ($script === null) {
             info('PHP runner error.', [
@@ -130,7 +130,7 @@ class ScriptRunner
     /**
      * Write the script to a file inside the project.
      */
-    protected function write(string $code): ?string
+    protected function write(string $code, array $arguments = []): ?string
     {
         $script = 'storage/framework/lsp-' . bin2hex(random_bytes(8)) . '.php';
         $path = $this->path . '/' . $script;
@@ -140,19 +140,20 @@ class ScriptRunner
             return null;
         }
 
-        return @file_put_contents($path, $this->code($code)) === false ? null : $script;
+        return @file_put_contents($path, $this->code($code, $arguments)) === false ? null : $script;
     }
 
     /**
      * Get PHP code with LSP template helpers available.
      */
-    protected function code(string $code): string
+    protected function code(string $code, array $arguments = []): string
     {
         return implode(PHP_EOL, [
             '<?php',
             ...$this->bootstrap(),
             'error_reporting(error_reporting() & ~(' . self::SUPPRESSED_ERROR_TYPES . '));',
             $this->normalize(file_get_contents(__DIR__ . '/Data/Templates/global.php') ?: ''),
+            '$GLOBALS[\'arguments\'] = ' . var_export($arguments, true) . ';',
             $this->normalize($code),
         ]);
     }
@@ -170,9 +171,9 @@ class ScriptRunner
     /**
      * Run PHP code and decode the output as JSON.
      */
-    public function json(string $code): mixed
+    public function json(string $code, array $arguments = []): mixed
     {
-        $output = $this->run($code);
+        $output = $this->run($code, $arguments);
 
         if ($output === null) {
             return null;
