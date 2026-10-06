@@ -1,5 +1,6 @@
 <?php
 
+use Pest\Bootstrappers\BootFiles;
 use Pest\Expectation;
 use Pest\TestSuite;
 
@@ -23,8 +24,9 @@ $pest = new class
 
         TestSuite::getInstance(base_path(), 'tests');
 
-        if (file_exists($pestFile = base_path('tests/Pest.php'))) {
-            require_once $pestFile;
+        if (file_exists(base_path('tests/Pest.php'))) {
+            // Pest only resolves relative in() paths when Pest.php is loaded by one of its own bootstrappers
+            (new BootFiles)->boot();
         }
     }
 
