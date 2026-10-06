@@ -32,7 +32,7 @@ class DetectWalker
     public function __construct(protected string $document, $debug = false)
     {
         $this->debug = $debug;
-        $this->sourceFile = (new Parser)->parseSourceFile(trim($this->document));
+        $this->sourceFile = (new Parser)->parseSourceFile($this->document);
         $this->context = new DetectContext;
     }
 
