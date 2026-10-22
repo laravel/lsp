@@ -341,6 +341,7 @@ $translator = new class
         $key = str($file)
             ->after($path . DIRECTORY_SEPARATOR)
             ->after(DIRECTORY_SEPARATOR)
+            ->replace(DIRECTORY_SEPARATOR, '/')
             ->replaceLast('.php', '')
             ->value();
 
