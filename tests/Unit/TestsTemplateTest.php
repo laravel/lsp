@@ -2,13 +2,28 @@
 
 use App\Lsp\ScriptRunner;
 
-test('the tests template reads phpunit.xml when the configuration loader requires an event emitter', function () {
+test('the tests template constructs the configuration loader with the event emitter PHPUnit 13.4 requires', function () {
     $root = sys_get_temp_dir() . '/lsp-tests-template-' . getmypid();
+
+    $cleanup = function () use ($root) {
+        @unlink($root . '/vendor');
+        @unlink($root . '/bootstrap/app.php');
+        @unlink($root . '/phpunit.xml');
+        @unlink($root . '/loader.php');
+        @unlink($root . '/loaded.txt');
+        @rmdir($root . '/bootstrap');
+        @rmdir($root . '/tests');
+        @rmdir($root . '/storage/framework');
+        @rmdir($root . '/storage');
+        @rmdir($root);
+    };
 
     @mkdir($root . '/bootstrap', 0777, true);
     @mkdir($root . '/tests', 0777, true);
 
     if (!@symlink(base_path('vendor'), $root . '/vendor')) {
+        $cleanup();
+
         $this->markTestSkipped('Unable to create a symlink on this platform.');
     }
 
@@ -47,6 +62,8 @@ test('the tests template reads phpunit.xml when the configuration loader require
 
         public function load(string $filename): ?LoadedFromFileConfiguration
         {
+            file_put_contents(__DIR__ . '/loaded.txt', $filename);
+
             return null;
         }
     }
@@ -56,15 +73,11 @@ test('the tests template reads phpunit.xml when the configuration loader require
 
     try {
         $suites = $runner->json(file_get_contents(base_path('app/Lsp/Data/Templates/tests.php')));
+        $loaded = @file_get_contents($root . '/loaded.txt');
     } finally {
-        @unlink($root . '/vendor');
-        array_map('unlink', [$root . '/bootstrap/app.php', $root . '/phpunit.xml', $root . '/loader.php']);
-        @rmdir($root . '/bootstrap');
-        @rmdir($root . '/tests');
-        @rmdir($root . '/storage/framework');
-        @rmdir($root . '/storage');
-        @rmdir($root);
+        $cleanup();
     }
 
-    expect($suites)->toBe([['name' => 'default', 'files' => []]]);
+    expect($loaded)->toBe($root . '/phpunit.xml')
+        ->and($suites)->toBe([['name' => 'default', 'files' => []]]);
 });
