@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\File;
 use Pest\Contracts\HasPrintableTestCaseName;
 use Pest\Support\Str;
 use Pest\TestSuite;
+use PHPUnit\Event\Facade as EventFacade;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\TestSuiteLoader;
@@ -115,7 +116,11 @@ $tests = new class
             base_path('phpunit.xml.dist'),
         ] as $path) {
             if (File::exists($path)) {
-                return (new Loader)->load($path);
+                $loader = method_exists(Loader::class, '__construct')
+                    ? new Loader(EventFacade::emitter())
+                    : new Loader;
+
+                return $loader->load($path);
             }
         }
 
