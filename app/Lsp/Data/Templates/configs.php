@@ -49,7 +49,7 @@ function vsCodeGetConfigValue($value, $key, $configPaths)
         array_pop($parts);
     }
 
-    if ($found === null) {
+    if ($found === null && is_numeric(str($key)->afterLast('.')->toString())) {
         return null;
     }
 
@@ -58,7 +58,7 @@ function vsCodeGetConfigValue($value, $key, $configPaths)
 
     if ($found === $key) {
         $file = $configPaths->get($found)[0];
-    } else {
+    } elseif ($found !== null) {
         foreach ($configPaths->get($found) as $path) {
             $cachedContents[$path] ??= file_get_contents($path);
             $cachedParsed[$path] ??= token_get_all($cachedContents[$path]);
