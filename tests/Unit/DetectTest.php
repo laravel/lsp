@@ -564,3 +564,138 @@ test('extract functions and string params', function () {
 
     ]));
 });
+
+test('extract component parameter expressions', function () {
+    $blade = <<<'BLADE'
+    <x-button :href="route('reports.index')" />
+    <x-button :href="route('reports.index')">Reports</x-button>
+    <flux:button :href="route('reports.show', $report)">Show</flux:button>
+    <x-input placeholder="{{ __('reports.search') }}" />
+    BLADE;
+
+    $walker = new DetectWalker($blade);
+
+    expect($walker->walk()->toJson(JSON_PRETTY_PRINT))->toBe(detect([
+        [
+            'type'       => 'methodCall',
+            'methodName' => 'route',
+            'className'  => null,
+            'arguments'  => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'reports.index',
+                                'start' => [
+                                    'line'   => 0,
+                                    'column' => 23,
+                                ],
+                                'end' => [
+                                    'line'   => 0,
+                                    'column' => 36,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        [
+            'type'       => 'methodCall',
+            'methodName' => 'route',
+            'className'  => null,
+            'arguments'  => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'reports.index',
+                                'start' => [
+                                    'line'   => 1,
+                                    'column' => 23,
+                                ],
+                                'end' => [
+                                    'line'   => 1,
+                                    'column' => 36,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        [
+            'type'       => 'methodCall',
+            'methodName' => 'route',
+            'className'  => null,
+            'arguments'  => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 2,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'reports.show',
+                                'start' => [
+                                    'line'   => 2,
+                                    'column' => 26,
+                                ],
+                                'end' => [
+                                    'line'   => 2,
+                                    'column' => 38,
+                                ],
+                            ],
+                        ],
+                    ],
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [],
+                    ],
+                ],
+            ],
+        ],
+        [
+            'type'       => 'methodCall',
+            'methodName' => '__',
+            'className'  => null,
+            'arguments'  => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'reports.search',
+                                'start' => [
+                                    'line'   => 3,
+                                    'column' => 28,
+                                ],
+                                'end' => [
+                                    'line'   => 3,
+                                    'column' => 42,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]));
+});
