@@ -87,7 +87,7 @@ $translator = new class
             return Arr::wrap($property->getValue($loader));
         }
 
-        return [];
+        return [app()->langPath()];
     }
 
     public function collectFromPath(string $path, ?string $namespace = null)
