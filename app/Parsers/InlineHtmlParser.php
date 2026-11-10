@@ -11,6 +11,7 @@ use Microsoft\PhpParser\Parser;
 use Microsoft\PhpParser\PositionUtilities;
 use Microsoft\PhpParser\Range;
 use Stillat\BladeParser\Document\Document;
+use Stillat\BladeParser\Document\DocumentOptions;
 use Stillat\BladeParser\Nodes\BaseNode;
 use Stillat\BladeParser\Nodes\DirectiveNode;
 use Stillat\BladeParser\Nodes\EchoNode;
@@ -58,7 +59,8 @@ class InlineHtmlParser extends AbstractParser
         }
 
         $this->parseBladeContent(Document::fromText(
-            $this->replaceMultibyteChars($node->getText())
+            $this->replaceMultibyteChars($node->getText()),
+            documentOptions: new DocumentOptions(customDirectives: ['includeIsolated']),
         ));
 
         if (count($this->items)) {
