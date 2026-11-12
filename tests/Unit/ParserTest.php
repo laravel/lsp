@@ -35,6 +35,12 @@ function contextFromArray($values)
 function contextResult($file, $dump = false)
 {
     $code = fromFile($file);
+
+    return contextResultCode($code, $dump);
+}
+
+function contextResultCode($code, $dump = false)
+{
     $walker = new Walker($code, true);
 
     $context = $walker->walk();
@@ -728,3 +734,59 @@ test('this reference', function () {
 });
 
 test('object instantiation')->todo();
+
+describe('autocomplete with quotes', function () {
+    test('function with an argument', function (string $code) {
+        expect(contextResultCode($code))->toBe(createContext([]));
+    })->with([
+        '{{ config("app.name"',
+        "{{ config('app.name'",
+        '<?php config("app.name"',
+        "<?php config('app.name'",
+    ]);
+
+    test('function with an opening quote in blade', function (string $code) {
+        expect(contextResultCode($code))->toBe(createContext([
+            [
+                'type'     => 'blade',
+                'children' => [
+                    [
+                        'type'           => 'methodCall',
+                        'autocompleting' => true,
+                        'methodName'     => 'config',
+                        'className'      => null,
+                        'arguments'      => [
+                            'type'                => 'arguments',
+                            'autocompletingIndex' => 0,
+                            'children'            => [],
+                        ],
+                        'children'       => [],
+                    ],
+                ],
+            ]
+        ]));
+    })->with([
+        '{{ config("',
+        "{{ config('",
+    ]);
+
+    test('function with an opening quote', function (string $code) {
+        expect(contextResultCode($code))->toBe(createContext([
+            [
+                'type'           => 'methodCall',
+                'autocompleting' => true,
+                'methodName'     => 'config',
+                'className'      => null,
+                'arguments'      => [
+                    'type'                => 'arguments',
+                    'autocompletingIndex' => 0,
+                    'children'            => [],
+                ],
+                'children'       => [],
+            ]
+        ]));
+    })->with([
+        '<?php config("',
+        "<?php config('",
+    ]);
+});
