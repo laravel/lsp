@@ -182,7 +182,10 @@ class InlineHtmlParser extends AbstractParser
         $this->items[] = $child;
     }
 
-    protected function parseComponentNode(ComponentNode $node)
+    /**
+     * Parse the PHP expressions in a component tag's bound and interpolated parameters.
+     */
+    protected function parseComponentNode(ComponentNode $node): void
     {
         foreach ($node->parameters as $parameter) {
             if ($parameter->value === '' || $parameter->valueNode?->position === null) {
@@ -227,14 +230,17 @@ class InlineHtmlParser extends AbstractParser
         };
     }
 
+    /**
+     * Get the contents and offsets of the unescaped echoes in a parameter value.
+     *
+     * @return array<int, array{string, int}>
+     */
     protected function parameterEchoes(string $value): array
     {
-        $echoStrings = $this->echoStrings;
-        uksort($echoStrings, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
-
         $alternations = [];
 
-        foreach ($echoStrings as $prefix => $suffix) {
+        // Longer prefixes come first in $echoStrings, so {{{ matches before {{.
+        foreach ($this->echoStrings as $prefix => $suffix) {
             $alternations[] = preg_quote($prefix, '/') . '(.*?)' . preg_quote($suffix, '/');
         }
 
@@ -259,7 +265,10 @@ class InlineHtmlParser extends AbstractParser
         return $echoes;
     }
 
-    protected function parseExpression(string $content, int $line, int $column)
+    /**
+     * Parse a PHP expression found at the given line and column of the Blade content.
+     */
+    protected function parseExpression(string $content, int $line, int $column): void
     {
         $snippet = "<?php\n" . str_repeat(' ', $column) . $content . ';';
 
