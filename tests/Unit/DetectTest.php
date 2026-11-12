@@ -699,3 +699,41 @@ test('extract component parameter expressions', function () {
         ],
     ]));
 });
+
+test('extract component parameter echoes after a line break', function () {
+    $blade = <<<'BLADE'
+    <x-input class="{{ route('a.b') }}
+        {{ route('c.d') }}" />
+    BLADE;
+
+    $walker = new DetectWalker($blade);
+
+    $route = fn (string $name, int $line, int $column) => [
+        'type'       => 'methodCall',
+        'methodName' => 'route',
+        'className'  => null,
+        'arguments'  => [
+            'type'                => 'arguments',
+            'autocompletingIndex' => 1,
+            'children'            => [
+                [
+                    'type'     => 'argument',
+                    'name'     => null,
+                    'children' => [
+                        [
+                            'type'  => 'string',
+                            'value' => $name,
+                            'start' => ['line' => $line, 'column' => $column],
+                            'end'   => ['line' => $line, 'column' => $column + mb_strlen($name)],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    expect($walker->walk()->toJson(JSON_PRETTY_PRINT))->toBe(detect([
+        $route('a.b', 0, 25),
+        $route('c.d', 1, 13),
+    ]));
+});

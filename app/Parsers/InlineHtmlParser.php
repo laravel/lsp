@@ -199,7 +199,14 @@ class InlineHtmlParser extends AbstractParser
             }
 
             foreach ($this->parameterEchoes($parameter->value) as [$content, $offset]) {
-                $this->parseExpression($content, $line, $column + $offset);
+                $before = substr($parameter->value, 0, $offset);
+                $newlines = substr_count($before, "\n");
+
+                $this->parseExpression(
+                    $content,
+                    $line + $newlines,
+                    $newlines === 0 ? $column + $offset : $offset - strrpos($before, "\n") - 1,
+                );
             }
         }
     }
