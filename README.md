@@ -97,6 +97,7 @@ Editor clients pass configuration through the LSP `initializationOptions` object
 
 | Option                  | Type       | Default                                 | Description                                                                                              |
 | ----------------------- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `basePath`              | `string`   | `""`                                    | Set where the Laravel application sits relative to the workspace root, for a project kept in a subdirectory. |
 | `phpEnvironment`        | `string`   | `"auto"`                                | Select the environment used to detect the PHP command for indexing project data.                         |
 | `phpCommand`            | `string[]` | Detected from `phpEnvironment`          | Use an explicit command and arguments, such as `["php"]` or `["./vendor/bin/sail", "php"]`.              |
 | `memoryLimit`           | `string`   | `"512M"`                                | Set the LSP server process `memory_limit` during initialize. Use PHP shorthand such as `"512M"`, `"1G"`, or `"-1"`. |
