@@ -45,11 +45,13 @@ final class Initialize implements Method
 
         $this->container->singleton(Project::class);
 
+        $scripts = new ScriptRunner($uri->path(), $this->phpCommand($request, $uri));
+
         $project = new Project(
             $uri,
             $request->array('initializationOptions'),
-            new ProjectIndex($this->container),
-            new ScriptRunner($uri->path(), $this->phpCommand($request, $uri)),
+            new ProjectIndex($this->container, $scripts),
+            $scripts,
         );
 
         $this->container->instance(Project::class, $project);
