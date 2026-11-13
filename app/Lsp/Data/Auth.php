@@ -43,7 +43,9 @@ class Auth implements DataProvider
      */
     public function get(): array
     {
-        $data = $this->project->scripts->json($this->template());
+        $data = $this->project->scripts->json($this->template(), [
+            'modelPaths' => $this->project->modelPaths(),
+        ]);
 
         return $this->parse(is_array($data) ? $data : []);
     }
@@ -56,9 +58,7 @@ class Auth implements DataProvider
     public function patterns(): array
     {
         return [
-            'app/Providers/{,*,**/*}.php',
-            'app/Models/{,*,**/*}.php',
-            'app/Policies/{,*,**/*}.php',
+            'app/{,*,**/*}.php'
         ];
     }
 }

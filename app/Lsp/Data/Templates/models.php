@@ -6,11 +6,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use phpDocumentor\Reflection\DocBlockFactory;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Finder\SplFileInfo;
 
 if (class_exists('\phpDocumentor\Reflection\DocBlockFactory')) {
     $factory = DocBlockFactory::createInstance();
@@ -67,11 +65,7 @@ $models = new class($factory)
 
     public function all()
     {
-        if (File::isDirectory(base_path('app/Models'))) {
-            collect(File::allFiles(base_path('app/Models')))
-                ->filter(fn (SplFileInfo $file) => $file->getExtension() === 'php')
-                ->each(fn ($file) => include_once ($file));
-        }
+        LspHelper::includeModels($GLOBALS['arguments']['modelPaths']);
 
         return collect(get_declared_classes())
             ->filter(fn ($class) => is_subclass_of($class, Model::class))

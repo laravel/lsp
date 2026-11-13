@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\File;
+use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
 class LspHelper
 {
     public static function relativePath($path)
@@ -41,5 +44,19 @@ class LspHelper
             is_bool($value)            => $value ? 'true' : 'false',
             default                    => $value,
         };
+    }
+
+    public static function includeModels(array $paths)
+    {
+        collect($paths)
+            ->flatMap(function ($path) {
+                try {
+                    return File::allFiles(base_path($path));
+                } catch (DirectoryNotFoundException) {
+                    return [];
+                }
+            })
+            ->filter(fn($file) => $file->getExtension() == 'php')
+            ->each(fn($file) => include_once($file));
     }
 }

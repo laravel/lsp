@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
-use Symfony\Component\Finder\SplFileInfo;
 
 if (!App::bound('auth')) {
     echo json_encode([
@@ -18,11 +16,7 @@ if (!App::bound('auth')) {
         'policies'        => (object) [],
     ]);
 } else {
-    if (File::isDirectory(base_path('app/Models'))) {
-        collect(File::allFiles(base_path('app/Models')))
-            ->filter(fn (SplFileInfo $file) => $file->getExtension() === 'php')
-            ->each(fn ($file) => include_once ($file));
-    }
+    LspHelper::includeModels($GLOBALS['arguments']['modelPaths']);
 
     $modelPolicies = collect(get_declared_classes())
         ->filter(fn ($class) => is_subclass_of($class, Model::class))

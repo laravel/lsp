@@ -45,7 +45,9 @@ class Models implements DataProvider
      */
     public function get(): array
     {
-        $data = $this->project->scripts->json($this->template());
+        $data = $this->project->scripts->json($this->template(), [
+            'modelPaths' => $this->project->modelPaths(),
+        ]);
 
         return $this->parse(is_array($data) ? $data : []);
     }
