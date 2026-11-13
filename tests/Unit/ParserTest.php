@@ -12,26 +12,6 @@ function createContext($values)
     return json_encode(['type' => 'base', 'children' => $values], JSON_PRETTY_PRINT);
 }
 
-function contextFromArray($values)
-{
-    return array_merge([
-        'classDefinition'        => null,
-        'implements'             => [],
-        'extends'                => null,
-        'methodDefinition'       => null,
-        'methodDefinitionParams' => [],
-        'methodExistingArgs'     => [],
-        'classUsed'              => null,
-        'methodUsed'             => null,
-        'parent'                 => null,
-        'variables'              => [],
-        'definedProperties'      => [],
-        'fillingInArrayKey'      => false,
-        'fillingInArrayValue'    => false,
-        'paramIndex'             => 0,
-    ], $values);
-}
-
 function contextResult($file, $dump = false)
 {
     $code = fromFile($file);
@@ -55,10 +35,14 @@ test('basic function', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'render',
-            'class'          => null,
-            'arguments'      => [],
-            'children'       => [],
+            'methodName'     => 'render',
+            'className'      => null,
+            'arguments'      => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [],
+            ],
+            'children' => [],
         ],
     ]));
 });
@@ -73,12 +57,22 @@ test('basic function with params', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'render',
-            'class'          => null,
+            'methodName'     => 'render',
+            'className'      => null,
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => 'my-view',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'my-view',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'children' => [],
@@ -91,10 +85,14 @@ test('basic static method', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
-            'arguments'      => [],
-            'children'       => [],
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
+            'arguments'      => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [],
+            ],
+            'children' => [],
         ],
     ]));
 });
@@ -104,12 +102,22 @@ test('basic static method with params', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => 'email',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'email',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'children' => [],
@@ -122,27 +130,53 @@ test('chained static method with params', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'orWhere',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'orWhere',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => 'name',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'name',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'children' => [
                 [
-                    'type'      => 'methodCall',
-                    'name'      => 'where',
-                    'class'     => 'App\Models\User',
-                    'arguments' => [
-                        [
-                            'type'  => 'string',
-                            'value' => 'email',
-                        ],
-                        [
-                            'type'  => 'string',
-                            'value' => '',
+                    'type'       => 'methodCall',
+                    'methodName' => 'where',
+                    'className'  => 'App\Models\User',
+                    'arguments'  => [
+                        'type'                => 'arguments',
+                        'autocompletingIndex' => 2,
+                        'children'            => [
+                            [
+                                'type'     => 'argument',
+                                'name'     => null,
+                                'children' => [
+                                    [
+                                        'type'  => 'string',
+                                        'value' => 'email',
+                                    ],
+                                ],
+                            ],
+                            [
+                                'type'     => 'argument',
+                                'name'     => null,
+                                'children' => [
+                                    [
+                                        'type'  => 'string',
+                                        'value' => '',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                     'children' => [],
@@ -159,8 +193,13 @@ test('basic method', function () {
             'name'  => 'user',
             'value' => [
                 [
-                    'type'     => 'object',
-                    'name'     => 'App\Models\User',
+                    'type'      => 'object',
+                    'className' => 'App\Models\User',
+                    'arguments' => [
+                        'type'                => 'arguments',
+                        'autocompletingIndex' => 0,
+                        'children'            => [],
+                    ],
                     'children' => [],
                 ],
             ],
@@ -168,10 +207,14 @@ test('basic method', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
-            'arguments'      => [],
-            'children'       => [],
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
+            'arguments'      => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [],
+            ],
+            'children' => [],
         ],
     ]));
 });
@@ -183,8 +226,13 @@ test('basic method with params', function () {
             'name'  => 'user',
             'value' => [
                 [
-                    'type'     => 'object',
-                    'name'     => 'App\Models\User',
+                    'type'      => 'object',
+                    'className' => 'App\Models\User',
+                    'arguments' => [
+                        'type'                => 'arguments',
+                        'autocompletingIndex' => 0,
+                        'children'            => [],
+                    ],
                     'children' => [],
                 ],
             ],
@@ -192,12 +240,22 @@ test('basic method with params', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => 'email',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'email',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'children' => [],
@@ -212,8 +270,13 @@ test('chained method with params', function () {
             'name'  => 'user',
             'value' => [
                 [
-                    'type'     => 'object',
-                    'name'     => 'App\Models\User',
+                    'type'      => 'object',
+                    'className' => 'App\Models\User',
+                    'arguments' => [
+                        'type'                => 'arguments',
+                        'autocompletingIndex' => 0,
+                        'children'            => [],
+                    ],
                     'children' => [],
                 ],
             ],
@@ -221,27 +284,53 @@ test('chained method with params', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'orWhere',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'orWhere',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => 'name',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => 'name',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'children' => [
                 [
-                    'type'      => 'methodCall',
-                    'name'      => 'where',
-                    'class'     => 'App\Models\User',
-                    'arguments' => [
-                        [
-                            'type'  => 'string',
-                            'value' => 'email',
-                        ],
-                        [
-                            'type'  => 'string',
-                            'value' => '',
+                    'type'       => 'methodCall',
+                    'methodName' => 'where',
+                    'className'  => 'App\Models\User',
+                    'arguments'  => [
+                        'type'                => 'arguments',
+                        'autocompletingIndex' => 2,
+                        'children'            => [
+                            [
+                                'type'     => 'argument',
+                                'name'     => null,
+                                'children' => [
+                                    [
+                                        'type'  => 'string',
+                                        'value' => 'email',
+                                    ],
+                                ],
+                            ],
+                            [
+                                'type'     => 'argument',
+                                'name'     => null,
+                                'children' => [
+                                    [
+                                        'type'  => 'string',
+                                        'value' => '',
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                     'children' => [],
@@ -256,25 +345,39 @@ test('anonymous function as param', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'       => 'closure',
-                    'parameters' => [
-                        [
-                            'types' => ['Illuminate\Database\Query\Builder'],
-                            'name'  => 'q',
-                        ],
-                    ],
-                    'children' => [
-                        [
-                            'type'           => 'methodCall',
-                            'autocompleting' => true,
-                            'name'           => 'whereIn',
-                            'class'          => 'Illuminate\Database\Query\Builder',
-                            'arguments'      => [],
-                            'children'       => [],
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'       => 'closure',
+                                'parameters' => [
+                                    [
+                                        'types' => ['Illuminate\Database\Query\Builder'],
+                                        'name'  => 'q',
+                                    ],
+                                ],
+                                'children' => [
+                                    [
+                                        'type'           => 'methodCall',
+                                        'autocompleting' => true,
+                                        'methodName'     => 'whereIn',
+                                        'className'      => 'Illuminate\Database\Query\Builder',
+                                        'arguments'      => [
+                                            'type'                => 'arguments',
+                                            'autocompletingIndex' => 0,
+                                            'children'            => [],
+                                        ],
+                                        'children' => [],
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -289,25 +392,39 @@ test('arrow function as param', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'where',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'where',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'       => 'closure',
-                    'parameters' => [
-                        [
-                            'types' => ['Illuminate\Database\Query\Builder'],
-                            'name'  => 'q',
-                        ],
-                    ],
-                    'children' => [
-                        [
-                            'type'           => 'methodCall',
-                            'autocompleting' => true,
-                            'name'           => 'whereIn',
-                            'class'          => 'Illuminate\Database\Query\Builder',
-                            'arguments'      => [],
-                            'children'       => [],
+                'type'                => 'arguments',
+                'autocompletingIndex' => 1,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'       => 'closure',
+                                'parameters' => [
+                                    [
+                                        'types' => ['Illuminate\Database\Query\Builder'],
+                                        'name'  => 'q',
+                                    ],
+                                ],
+                                'children' => [
+                                    [
+                                        'type'           => 'methodCall',
+                                        'autocompleting' => true,
+                                        'methodName'     => 'whereIn',
+                                        'className'      => 'Illuminate\Database\Query\Builder',
+                                        'arguments'      => [
+                                            'type'                => 'arguments',
+                                            'autocompletingIndex' => 0,
+                                            'children'            => [],
+                                        ],
+                                        'children' => [],
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -322,36 +439,66 @@ test('nested functions', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'get',
-            'class'          => 'Route',
+            'methodName'     => 'get',
+            'className'      => 'Route',
             'arguments'      => [
-                [
-                    'type'  => 'string',
-                    'value' => '/',
-                ],
-                [
-                    'type'       => 'closure',
-                    'parameters' => [],
-                    'children'   => [
-                        [
-                            'type'      => 'methodCall',
-                            'name'      => 'trans',
-                            'class'     => null,
-                            'arguments' => [
-                                [
-                                    'type'  => 'string',
-                                    'value' => 'auth.throttle',
+                'type'                => 'arguments',
+                'autocompletingIndex' => 2,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'  => 'string',
+                                'value' => '/',
+                            ],
+                        ],
+                    ],
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'       => 'closure',
+                                'parameters' => [],
+                                'children'   => [
+                                    [
+                                        'type'       => 'methodCall',
+                                        'methodName' => 'trans',
+                                        'className'  => null,
+                                        'arguments'  => [
+                                            'type'                => 'arguments',
+                                            'autocompletingIndex' => 1,
+                                            'children'            => [
+                                                [
+                                                    'type'     => 'argument',
+                                                    'name'     => null,
+                                                    'children' => [
+                                                        [
+                                                            'type'  => 'string',
+                                                            'value' => 'auth.throttle',
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                        'children' => [],
+                                    ],
+                                    [
+                                        'type'           => 'methodCall',
+                                        'autocompleting' => true,
+                                        'methodName'     => 'where',
+                                        'className'      => 'App\Models\User',
+                                        'arguments'      => [
+                                            'type'                => 'arguments',
+                                            'autocompletingIndex' => 0,
+                                            'children'            => [],
+                                        ],
+                                        'children' => [],
+                                    ],
                                 ],
                             ],
-                            'children' => [],
-                        ],
-                        [
-                            'type'           => 'methodCall',
-                            'autocompleting' => true,
-                            'name'           => 'where',
-                            'class'          => 'App\Models\User',
-                            'arguments'      => [],
-                            'children'       => [],
                         ],
                     ],
                 ],
@@ -366,42 +513,57 @@ test('array with arrow function', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'with',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'with',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'           => 'array',
-                    'autocompleting' => true,
-                    'children'       => [
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'team',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'           => 'array',
+                                'autocompleting' => true,
+                                'children'       => [
                                     [
-                                        'types' => ['Illuminate\Database\Query\Builder'],
-                                        'name'  => 'q',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'team',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => ['Illuminate\Database\Query\Builder'],
+                                                    'name'  => 'q',
+                                                ],
+                                            ],
+                                            'children' => [
+                                                [
+                                                    'type'           => 'methodCall',
+                                                    'autocompleting' => true,
+                                                    'methodName'     => 'where',
+                                                    'className'      => 'Illuminate\Database\Query\Builder',
+                                                    'arguments'      => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 0,
+                                                        'children'            => [],
+                                                    ],
+                                                    'children' => [],
+                                                ],
+                                            ],
+                                        ],
+                                        'autocompletingValue' => true,
                                     ],
                                 ],
-                                'children' => [
-                                    [
-                                        'type'           => 'methodCall',
-                                        'autocompleting' => true,
-                                        'name'           => 'where',
-                                        'class'          => 'Illuminate\Database\Query\Builder',
-                                        'arguments'      => [],
-                                        'children'       => [],
-                                    ],
-                                ],
+                                'autocompletingKey'   => false,
+                                'autocompletingValue' => true,
                             ],
-                            'autocompletingValue' => true,
                         ],
                     ],
-                    'autocompletingKey'   => false,
-                    'autocompletingValue' => true,
                 ],
             ],
             'children' => [],
@@ -414,75 +576,107 @@ test('array with arrow function several keys', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'with',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'with',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'           => 'array',
-                    'autocompleting' => true,
-                    'children'       => [
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'team',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'           => 'array',
+                                'autocompleting' => true,
+                                'children'       => [
                                     [
-                                        'types' => ['Illuminate\Database\Query\Builder'],
-                                        'name'  => 'q',
-                                    ],
-                                ],
-                                'children' => [
-                                    [
-                                        'type'      => 'methodCall',
-                                        'name'      => 'where',
-                                        'class'     => 'Illuminate\Database\Query\Builder',
-                                        'arguments' => [
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'team',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => ['Illuminate\Database\Query\Builder'],
+                                                    'name'  => 'q',
+                                                ],
                                             ],
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                            'children' => [
+                                                [
+                                                    'type'       => 'methodCall',
+                                                    'methodName' => 'where',
+                                                    'className'  => 'Illuminate\Database\Query\Builder',
+                                                    'arguments'  => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 2,
+                                                        'children'            => [
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                    'children' => [],
+                                                ],
                                             ],
                                         ],
-                                        'children' => [],
                                     ],
-                                ],
-                            ],
-                        ],
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'organization',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
                                     [
-                                        'types' => [],
-                                        'name'  => 'q',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'organization',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => [],
+                                                    'name'  => 'q',
+                                                ],
+                                            ],
+                                            'children' => [
+                                                [
+                                                    'type'           => 'methodCall',
+                                                    'autocompleting' => true,
+                                                    'methodName'     => 'whereIn',
+                                                    'className'      => null,
+                                                    'arguments'      => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 0,
+                                                        'children'            => [],
+                                                    ],
+                                                    'children' => [],
+                                                ],
+                                            ],
+                                        ],
+                                        'autocompletingValue' => true,
                                     ],
                                 ],
-                                'children' => [
-                                    [
-                                        'type'           => 'methodCall',
-                                        'autocompleting' => true,
-                                        'name'           => 'whereIn',
-                                        'class'          => null,
-                                        'arguments'      => [],
-                                        'children'       => [],
-                                    ],
-                                ],
+                                'autocompletingKey'   => false,
+                                'autocompletingValue' => true,
                             ],
-                            'autocompletingValue' => true,
                         ],
                     ],
-                    'autocompletingKey'   => false,
-                    'autocompletingValue' => true,
                 ],
             ],
             'children' => [],
@@ -494,14 +688,14 @@ test('eloquent make from set variable', function () {
     expect(contextResult('eloquent-make-from-set-variable'))->toBe(createContext([
         [
             'type'       => 'classDefinition',
-            'name'       => 'App\Http\Controllers\ProviderController',
+            'className'  => 'App\Http\Controllers\ProviderController',
             'extends'    => 'App\Http\Controllers\Controller',
             'implements' => [],
             'properties' => [],
             'children'   => [
                 [
                     'type'       => 'methodDefinition',
-                    'name'       => 'store',
+                    'methodName' => 'store',
                     'parameters' => [
                         [
                             'types' => ['Illuminate\Http\Request'],
@@ -516,15 +710,25 @@ test('eloquent make from set variable', function () {
                                 [
                                     'type'           => 'methodCall',
                                     'autocompleting' => true,
-                                    'name'           => 'make',
-                                    'class'          => 'App\Models\Provider',
+                                    'methodName'     => 'make',
+                                    'className'      => 'App\Models\Provider',
                                     'arguments'      => [
-                                        [
-                                            'type'                => 'array',
-                                            'autocompleting'      => true,
-                                            'children'            => [],
-                                            'autocompletingKey'   => true,
-                                            'autocompletingValue' => true,
+                                        'type'                => 'arguments',
+                                        'autocompletingIndex' => 0,
+                                        'children'            => [
+                                            [
+                                                'type'     => 'argument',
+                                                'name'     => null,
+                                                'children' => [
+                                                    [
+                                                        'type'                => 'array',
+                                                        'autocompleting'      => true,
+                                                        'children'            => [],
+                                                        'autocompletingKey'   => true,
+                                                        'autocompletingValue' => true,
+                                                    ],
+                                                ],
+                                            ],
                                         ],
                                     ],
                                     'children' => [],
@@ -543,80 +747,118 @@ test('array with arrow function several keys and second param', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'with',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'with',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'           => 'array',
-                    'autocompleting' => true,
-                    'children'       => [
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'team',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'           => 'array',
+                                'autocompleting' => true,
+                                'children'       => [
                                     [
-                                        'types' => ['Illuminate\Database\Query\Builder'],
-                                        'name'  => 'q',
-                                    ],
-                                ],
-                                'children' => [
-                                    [
-                                        'type'      => 'methodCall',
-                                        'name'      => 'where',
-                                        'class'     => 'Illuminate\Database\Query\Builder',
-                                        'arguments' => [
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'team',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => ['Illuminate\Database\Query\Builder'],
+                                                    'name'  => 'q',
+                                                ],
                                             ],
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                            'children' => [
+                                                [
+                                                    'type'       => 'methodCall',
+                                                    'methodName' => 'where',
+                                                    'className'  => 'Illuminate\Database\Query\Builder',
+                                                    'arguments'  => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 2,
+                                                        'children'            => [
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                    'children' => [],
+                                                ],
                                             ],
                                         ],
-                                        'children' => [],
                                     ],
-                                ],
-                            ],
-                        ],
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'organization',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
                                     [
-                                        'types' => [],
-                                        'name'  => 'q',
-                                    ],
-                                ],
-                                'children' => [
-                                    [
-                                        'type'           => 'methodCall',
-                                        'autocompleting' => true,
-                                        'name'           => 'whereIn',
-                                        'class'          => null,
-                                        'arguments'      => [
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'organization',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => [],
+                                                    'name'  => 'q',
+                                                ],
+                                            ],
+                                            'children' => [
+                                                [
+                                                    'type'           => 'methodCall',
+                                                    'autocompleting' => true,
+                                                    'methodName'     => 'whereIn',
+                                                    'className'      => null,
+                                                    'arguments'      => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 1,
+                                                        'children'            => [
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                    'children' => [],
+                                                ],
                                             ],
                                         ],
-                                        'children' => [],
+                                        'autocompletingValue' => true,
                                     ],
                                 ],
+                                'autocompletingKey'   => false,
+                                'autocompletingValue' => true,
                             ],
-                            'autocompletingValue' => true,
                         ],
                     ],
-                    'autocompletingKey'   => false,
-                    'autocompletingValue' => true,
                 ],
             ],
             'children' => [],
@@ -629,45 +871,76 @@ test('array with arrow function missing second key', function () {
         [
             'type'           => 'methodCall',
             'autocompleting' => true,
-            'name'           => 'with',
-            'class'          => 'App\Models\User',
+            'methodName'     => 'with',
+            'className'      => 'App\Models\User',
             'arguments'      => [
-                [
-                    'type'           => 'array',
-                    'autocompleting' => true,
-                    'children'       => [
-                        [
-                            'key' => [
-                                'type'  => 'string',
-                                'value' => 'team',
-                            ],
-                            'value' => [
-                                'type'       => 'closure',
-                                'parameters' => [
+                'type'                => 'arguments',
+                'autocompletingIndex' => 0,
+                'children'            => [
+                    [
+                        'type'     => 'argument',
+                        'name'     => null,
+                        'children' => [
+                            [
+                                'type'           => 'array',
+                                'autocompleting' => true,
+                                'children'       => [
                                     [
-                                        'types' => ['Illuminate\Database\Query\Builder'],
-                                        'name'  => 'q',
-                                    ],
-                                ],
-                                'children' => [
-                                    [
-                                        'type'      => 'methodCall',
-                                        'name'      => 'where',
-                                        'class'     => 'Illuminate\Database\Query\Builder',
-                                        'arguments' => [
-                                            [
-                                                'type'  => 'string',
-                                                'value' => '',
+                                        'type' => 'array_item',
+                                        'key'  => [
+                                            'type'  => 'string',
+                                            'value' => 'team',
+                                        ],
+                                        'value' => [
+                                            'type'       => 'closure',
+                                            'parameters' => [
+                                                [
+                                                    'types' => ['Illuminate\Database\Query\Builder'],
+                                                    'name'  => 'q',
+                                                ],
+                                            ],
+                                            'children' => [
+                                                [
+                                                    'type'       => 'methodCall',
+                                                    'methodName' => 'where',
+                                                    'className'  => 'Illuminate\Database\Query\Builder',
+                                                    'arguments'  => [
+                                                        'type'                => 'arguments',
+                                                        'autocompletingIndex' => 2,
+                                                        'children'            => [
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                            [
+                                                                'type'     => 'argument',
+                                                                'name'     => null,
+                                                                'children' => [
+                                                                    [
+                                                                        'type'  => 'string',
+                                                                        'value' => '',
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                    'children' => [],
+                                                ],
                                             ],
                                         ],
-                                        'children' => [],
                                     ],
                                 ],
+                                'autocompletingKey'   => true,
+                                'autocompletingValue' => false,
                             ],
                         ],
                     ],
-                    'autocompletingKey'   => true,
-                    'autocompletingValue' => false,
                 ],
             ],
             'children' => [],
@@ -679,7 +952,7 @@ test('this reference', function () {
     expect(contextResult('this-reference'))->toBe(createContext([
         [
             'type'       => 'classDefinition',
-            'name'       => 'App\Commands\MyCommand',
+            'className'  => 'App\Commands\MyCommand',
             'extends'    => 'Vendor\Package\Thing',
             'implements' => ['Vendor\Package\Contracts\BigContract', 'Vendor\Package\Support\Contracts\SmallContract'],
             'properties' => [
@@ -691,7 +964,7 @@ test('this reference', function () {
             'children' => [
                 [
                     'type'       => 'methodDefinition',
-                    'name'       => 'render',
+                    'methodName' => 'render',
                     'parameters' => [
                         [
                             'types' => ['array'],
@@ -702,21 +975,35 @@ test('this reference', function () {
                         [
                             'type'           => 'methodCall',
                             'autocompleting' => true,
-                            'name'           => 'where',
-                            'class'          => 'App\Models\User',
+                            'methodName'     => 'where',
+                            'className'      => 'App\Models\User',
                             'arguments'      => [
-                                [
-                                    'type'  => 'string',
-                                    'value' => 'url',
+                                'type'                => 'arguments',
+                                'autocompletingIndex' => 1,
+                                'children'            => [
+                                    [
+                                        'type'     => 'argument',
+                                        'name'     => null,
+                                        'children' => [
+                                            [
+                                                'type'  => 'string',
+                                                'value' => 'url',
+                                            ],
+                                        ],
+                                    ],
                                 ],
                             ],
                             'children' => [
                                 [
-                                    'type'      => 'methodCall',
-                                    'name'      => 'user',
-                                    'class'     => 'App\Models\User',
-                                    'arguments' => [],
-                                    'children'  => [],
+                                    'type'       => 'methodCall',
+                                    'methodName' => 'user',
+                                    'className'  => 'App\Models\User',
+                                    'arguments'  => [
+                                        'type'                => 'arguments',
+                                        'autocompletingIndex' => 0,
+                                        'children'            => [],
+                                    ],
+                                    'children' => [],
                                 ],
                             ],
                         ],
