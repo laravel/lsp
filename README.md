@@ -70,6 +70,24 @@ Enable LSP support in `opencode.json` and add Laravel LSP as a custom server:
 }
 ```
 
+### Pragtical
+
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`), type `Plugin Manager: Show`, and install **Language Server Protocol(LSP)**.
+
+2. Open the Command Palette again, type `Core: Open User Module`, and add:
+
+```lua
+local lsp = require "plugins.lsp"
+
+lsp.add_server {
+	name = "laravel_lsp",
+	language = "PHP",
+    file_patterns = { "%.php$", "%.blade.php$" },
+    command = { "/path/to/laravel-lsp", "--silent"},
+    transport = "stdio"
+}
+```
+
 ## Features
 
 | Area                  | Capabilities                                                |
