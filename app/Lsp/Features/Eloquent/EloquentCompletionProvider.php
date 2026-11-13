@@ -246,7 +246,7 @@ class EloquentCompletionProvider implements CompletionProvider
             $contextMethod = $this->methodName($context);
 
             if ($contextMethod === null || !in_array($contextMethod, $this->relationMethods, true)) {
-                return $class;
+                return $this->receiverRelatedModelClass($context, $models->get($class), $models) ?? $class;
             }
 
             $related = $this->relatedModelClass($context, $models->get($class));
@@ -256,6 +256,33 @@ class EloquentCompletionProvider implements CompletionProvider
             }
 
             return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the related model class when the method is called on a relation, e.g. `$user->posts()->create()`.
+     *
+     * @param  array<string, mixed>  $context
+     * @param  array<string, mixed>  $model
+     * @param  Collection<string, array<string, mixed>>  $models
+     */
+    protected function receiverRelatedModelClass(array $context, array $model, Collection $models): ?string
+    {
+        $receiver = $context['receiver'] ?? null;
+
+        while (is_array($receiver)) {
+            $relation = collect($model['relations'] ?? [])
+                ->first(fn (mixed $relation): bool => is_array($relation) && ($relation['name'] ?? null) === $this->methodName($receiver));
+
+            if (is_array($relation)) {
+                $related = $relation['related'] ?? null;
+
+                return is_string($related) && $models->has($related) ? $related : null;
+            }
+
+            $receiver = $receiver['receiver'] ?? null;
         }
 
         return null;
