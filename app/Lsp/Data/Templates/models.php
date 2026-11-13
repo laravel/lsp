@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use phpDocumentor\Reflection\DocBlockFactory;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
 if (class_exists('\phpDocumentor\Reflection\DocBlockFactory')) {
@@ -65,13 +66,57 @@ $models = new class($factory)
         $this->output = new BufferedOutput;
     }
 
+    /**
+     * Get the files that may declare the application's models.
+     *
+     * Models are not required to live in app/Models, so each namespace the
+     * application autoloads is searched for a Models directory. Only the
+     * production autoload roots are used, since the dev roots cover tests
+     * that are not safe to include. Directories are matched first so that
+     * files outside a Models directory are never enumerated.
+     */
+    protected function modelFiles()
+    {
+        $composer = base_path('composer.json');
+        $roots = collect();
+
+        if (is_file($composer)) {
+            $config = json_decode((string) file_get_contents($composer), true);
+
+            $roots = collect($config['autoload']['psr-4'] ?? [])
+                ->flatten()
+                ->map(fn ($path) => base_path(trim((string) $path, '/')));
+        }
+
+        return $roots
+            ->push(base_path('app'))
+            ->map(fn ($path) => realpath($path) ?: null)
+            ->filter(fn ($path) => $path !== null && File::isDirectory($path))
+            ->unique()
+            ->flatMap(fn ($root) => iterator_to_array(
+                Finder::create()->directories()->name('Models')->in($root)->ignoreUnreadableDirs(),
+                false
+            ))
+            ->map(fn (SplFileInfo $directory) => $directory->getPathname())
+            ->unique()
+            ->flatMap(fn ($directory) => iterator_to_array(
+                Finder::create()->files()->name('*.php')->in($directory)->ignoreUnreadableDirs(),
+                false
+            ))
+            ->map(fn (SplFileInfo $file) => $file->getPathname())
+            ->unique()
+            ->values();
+    }
+
     public function all()
     {
-        if (File::isDirectory(base_path('app/Models'))) {
-            collect(File::allFiles(base_path('app/Models')))
-                ->filter(fn (SplFileInfo $file) => $file->getExtension() === 'php')
-                ->each(fn ($file) => include_once ($file));
-        }
+        $this->modelFiles()->each(function ($file) {
+            try {
+                include_once $file;
+            } catch (Throwable $e) {
+                // A file that refuses to load should not hide every other model.
+            }
+        });
 
         return collect(get_declared_classes())
             ->filter(fn ($class) => is_subclass_of($class, Model::class))
