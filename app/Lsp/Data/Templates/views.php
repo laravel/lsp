@@ -113,11 +113,13 @@ $livewire = new class
         return array_map(function ($prop) use ($component) {
             $reflection = new ReflectionProperty($component, $prop);
 
+            $hasDefaultValue = $reflection->hasDefaultValue();
+
             return [
                 'name'            => $prop,
                 'type'            => (string) $reflection->getType() ?: 'mixed',
-                'hasDefaultValue' => $reflection->hasDefaultValue(),
-                'defaultValue'    => LspHelper::formatDefaultValue($reflection->getDefaultValue()),
+                'hasDefaultValue' => $hasDefaultValue,
+                'defaultValue'    => $hasDefaultValue ? LspHelper::formatDefaultValue($reflection->getDefaultValue()) : null,
             ];
         }, array_keys($component->all()));
     }
